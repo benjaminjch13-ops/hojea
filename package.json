@@ -1,0 +1,13 @@
+{
+  "name": "hojea",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Digitaliza tus cuadernos de papel y hojéalos en 3D.",
+  "scripts": {
+    "start": "node serve.mjs",
+    "lan": "node serve.mjs --lan",
+    "test": "node --test tests/imaging.test.mjs",
+    "icons": "node tools/make-icons.mjs"
+  }
+}
