@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node serve.mjs",
     "lan": "node serve.mjs --lan",
-    "test": "node --test tests/imaging.test.mjs tests/cover.test.mjs tests/palette.test.mjs",
+    "test": "node --test tests/imaging.test.mjs tests/cover.test.mjs tests/palette.test.mjs tests/muu.test.mjs",
     "icons": "node tools/make-icons.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.5.0"
   }
 }

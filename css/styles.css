@@ -517,7 +517,32 @@ dialog.lightbox {
 .home-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 36px; }
 .home-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 176px; padding: 18px; border-radius: 20px; background: var(--strawberry-milk); box-shadow: 0 8px 22px -16px rgba(84, 67, 61, .45); animation: card-in .5s cubic-bezier(.2, .8, .3, 1) both; }
 .home-card:nth-child(2) { animation-delay: .07s; background: var(--lavender); }
-.home-card:nth-child(3) { animation-delay: .14s; background: var(--butter-yellow); }
+.home-muu { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; padding: 18px; border-radius: 20px; background: var(--butter-yellow); box-shadow: 0 8px 22px -16px rgba(84, 67, 61, .45); animation: card-in .5s cubic-bezier(.2, .8, .3, 1) both; }
+.home-muu .card-idea { margin-top: 4px; }
+.home-muu .card-text { margin: 4px 0 6px; }
+.home-muu .btn.primary { background: var(--soft-white); color: var(--ink); box-shadow: var(--ui-shadow); }
+.advice-cow { display: block; flex: none; width: clamp(56px, 11vw, 88px); height: auto; overflow: visible; }
+.advice-body { flex: 1; min-width: 0; }
+.dialog-muu { width: min(560px, calc(100vw - 32px)); }
+.muu-form { display: flex; flex-direction: column; gap: 12px; }
+.muu-filter { margin: 0; padding: 0; border: 0; min-width: 0; }
+.muu-filter .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.muu-antojo { padding-block: 10px; font-family: inherit; line-height: 1.35; resize: vertical; }
+.muu-result:not(:empty) { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.muu-thinking { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--sheet-soft); }
+.muu-thinking .advice-cow { width: 48px; animation: muu-sway 1.2s ease-in-out infinite; }
+.muu-answer { display: flex; align-items: flex-start; gap: 12px; }
+.muu-answer h3 { margin: 0 0 4px; font: 500 20px/1.25 var(--serif); }
+.muu-answer p { margin: 0 0 8px; font-size: 15px; }
+.muu-answer ol { margin: 0 0 8px; padding-left: 20px; font-size: 15px; }
+.muu-tip { padding: 8px 10px; border-radius: 10px; background: var(--milk-cream); }
+.muu-note { margin: 6px 0 0; font-size: 13px; color: var(--sheet-soft); }
+.breed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.breed-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; border: 2px solid transparent; border-radius: 14px; background: var(--milk-cream); color: var(--sheet-ink); font-size: 13px; }
+.breed-tile[aria-pressed="true"] { border-color: var(--muu-pink); background: var(--strawberry-milk); font-weight: 600; }
+.breed-cow { display: block; width: 58px; height: auto; overflow: visible; }
+.breed-note { margin: 8px 0 18px; font-size: 13px; color: var(--sheet-soft); }
+.theme-title { margin: 0 0 14px; }
 @keyframes card-in { from { opacity: 0; transform: translateY(12px); } }
 .card-eyebrow { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
 .card-number { font: 500 clamp(44px, 7vw, 58px)/1 var(--serif); }
@@ -539,7 +564,7 @@ dialog.lightbox {
 .since-form { display: flex; flex-direction: column; gap: 4px; }
 .since-form .text-field { color-scheme: light; }
 @media (prefers-reduced-motion: reduce) {
-  .b-float, .home-deco span, .home-card, .shelf-item, .shelf-new { animation: none; }
+  .b-float, .home-deco span, .home-card, .home-muu, .muu-thinking .advice-cow, .shelf-item, .shelf-new { animation: none; }
 }
 .edit-stage-tools a.btn { text-decoration: none; }
 

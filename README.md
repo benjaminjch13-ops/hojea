@@ -6,7 +6,7 @@ La personalización de las libretas, por fuera y por dentro, viene de [Delulu Jo
 
 ## Cómo abrirla
 
-Necesitas [Node.js](https://nodejs.org) y nada más: no hay dependencias que instalar.
+Necesitas [Node.js](https://nodejs.org) y nada más. La app no tiene dependencias; `npm install` solo hace falta para las pruebas y las sugerencias con IA (`api/muu.js`).
 
 ```bash
 npm start
@@ -31,6 +31,10 @@ Luego abre <http://localhost:5173>.
 ## Paleta
 
 Los colores de la interfaz están en las variables de `:root`, al inicio de `css/styles.css`: Milk Cream, Strawberry Milk, Muu Pink, Butter Yellow, Matcha Milk, Lavender, Cocoa y Soft White. Para el texto se usan dos tonos más oscuros de Cocoa, porque el original no alcanza a leerse en letra chica sobre los pasteles. La paleta no afecta a las libretas: el cuero, los charms, los stickers y el papel tienen sus propios colores.
+
+## Sugerencias de Muu
+
+Las ideas están en `js/date-ideas.js` (Guatemala, tendencias de redes, clásicas y de vaquitas). "Pregúntale a Muu" llama a `api/muu.js`, que usa Claude con la clave guardada en Vercel como `ANTHROPIC_API_KEY`. Sin clave o sin conexión, Muu elige de su lista y lo avisa. Solo se envían los filtros y lo que se escribe en el antojo; las libretas y las fotos no salen del dispositivo.
 
 ## Publicación
 

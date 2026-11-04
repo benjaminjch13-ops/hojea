@@ -1,8 +1,11 @@
 {
   "framework": null,
   "buildCommand": "",
-  "installCommand": "",
+  "installCommand": "npm install --omit=dev",
   "outputDirectory": ".",
+  "functions": {
+    "api/muu.js": { "maxDuration": 30 }
+  },
   "headers": [
     {
       "source": "/sw.js",

@@ -2,6 +2,7 @@
 import * as db from './db.js';
 import { Book3D } from './book3d.js';
 import { coverDefaults, miniBookHTML } from './cover.js';
+import { MUU_BREEDS, muuBreedHead, muuBreedSVG } from './cow.js';
 import { renderCoverEditor } from './cover-editor.js';
 import { cropPhoto, openCamera } from './capture.js';
 import {
@@ -136,18 +137,33 @@ async function renderShelf(token) {
   await bindHome(app.querySelector('.shelf'), books, { createBook });
 }
 
-function themeDialog() {
+async function themeDialog() {
+  const current = (await db.getMeta('muuBreed')) ?? MUU_BREEDS[0].id;
   return modal(`
     <div class="manage-head">
-      <h2>Fondo de la app</h2>
+      <h2>Color de Muu</h2>
       <button class="icon-btn dark" data-close aria-label="Cerrar">${icon('close')}</button>
     </div>
+    <div class="breed-grid">${MUU_BREEDS.map((b) => `
+      <button type="button" class="breed-tile" data-breed="${b.id}" aria-pressed="${b.id === current}">
+        ${muuBreedSVG(b.id, 'breed-cow')}
+        <span>${esc(b.name)}</span>
+      </button>`).join('')}</div>
+    <p class="breed-note">El ícono de la app siempre es Muu rosa.</p>
+    <h2 class="theme-title">Fondo de la app</h2>
     <div class="theme-grid">${THEMES.map((t) => `
       <button type="button" class="theme-tile" data-theme-id="${t.id}">
         <span class="theme-chip" style="background:linear-gradient(165deg,${t.bg1},${t.bg2})"><i style="background:${t.accent}"></i></span>
         <span>${esc(t.name)}</span>
       </button>`).join('')}</div>`, (d, close) => {
     d.querySelector('[data-close]').onclick = () => close();
+    d.querySelector('.breed-grid').addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-breed]');
+      if (!b) return;
+      await db.setMeta('muuBreed', b.dataset.breed);
+      d.querySelectorAll('[data-breed]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      app.querySelectorAll('.muu-cow, .advice-cow').forEach((svg) => { svg.innerHTML = muuBreedHead(b.dataset.breed); });
+    });
     d.querySelector('.theme-grid').addEventListener('click', (e) => {
       const b = e.target.closest('[data-theme-id]');
       if (b) saveTheme(b.dataset.themeId);

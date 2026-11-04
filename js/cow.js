@@ -22,7 +22,7 @@ const WHITE_EDGE = 'stroke="#fff" stroke-width="5" stroke-linejoin="round" paint
 
 // La cara de Muu: cuernos curvos, orejas caídas y flequillo sobre los ojos.
 // `colors` reemplaza los tonos que se calculan a partir del pelaje.
-export function fluffyHead(fur = BODY_FUR, { edge = false, colors = {} } = {}) {
+export function fluffyHead(fur = BODY_FUR, { edge = false, colors = {}, spots = '' } = {}) {
   const c = {
     dark: shade(fur, -0.24), light: shade(fur, 0.2), lighter: shade(fur, 0.36),
     horn: '#f4e8cf', innerEar: '#eeb7a4', cheek: '#f09a86', cheekOpacity: 0.55,
@@ -45,6 +45,7 @@ export function fluffyHead(fur = BODY_FUR, { edge = false, colors = {} } = {}) {
     <g class="cow-ear cow-ear-l"><path ${line} d="M26 42C14 37 5 41 1 50c9 8 19 7 27 0z" fill="${dark}"/><path d="M23 45c-6-2-11-1-15 4 6 3 11 3 16-1z" fill="${c.innerEar}"/></g>
     <g class="cow-ear cow-ear-r"><path ${line} d="M74 42C86 37 95 41 99 50c-9 8-19 7-27 0z" fill="${dark}"/><path d="M77 45c6-2 11-1 15 4-6 3-11 3-16-1z" fill="${c.innerEar}"/></g>
     <path ${line} d="${shaggy(50, 51, 28, 32)}" fill="${fur}"/>
+    ${spots}
     <ellipse cx="33" cy="64" rx="5" ry="3.4" fill="${c.cheek}" opacity="${c.cheekOpacity}"/>
     <ellipse cx="67" cy="64" rx="5" ry="3.4" fill="${c.cheek}" opacity="${c.cheekOpacity}"/>
     <g class="cow-eyes">
@@ -69,10 +70,27 @@ export const MUU_COLORS = {
 };
 export const muuHead = (options = {}) => fluffyHead(MUU_PINK, { colors: MUU_COLORS, ...options });
 
-export const muuMascotHTML = () => `
+// Colores que se pueden elegir para Muu en la app. El ícono de la app siempre usa Muu rosa (muuHead).
+const HOLSTEIN_SPOTS = `<path d="M27 40c-5 8-3 19 6 22 9 2 14-6 11-15-2-7-11-13-17-7z" fill="#3a2c27"/><path d="M72 56c6 3 7 11 2 15-6 1-10-4-9-9 0-3 3-6 7-6z" fill="#3a2c27"/>`;
+export const MUU_BREEDS = [
+  { id: 'rosa', name: 'Muu rosa', head: () => muuHead() },
+  { id: 'cafe', name: 'Café peluda', head: () => fluffyHead('#b8703a') },
+  { id: 'rubia', name: 'Rubia', head: () => fluffyHead('#dcb074') },
+  { id: 'rojiza', name: 'Rojiza', head: () => fluffyHead('#9a4f2c') },
+  { id: 'negra', name: 'Negra', head: () => fluffyHead('#4d3a33') },
+  { id: 'gris', name: 'Gris ceniza', head: () => fluffyHead('#a7a09a') },
+  { id: 'blanca', name: 'Blanca', head: () => fluffyHead('#efe7da') },
+  { id: 'manchas', name: 'Con manchas', head: () => fluffyHead('#f5efe4', { colors: { dark: '#3a2c27', muzzle: '#f6c6cf', muzzleTop: '#fbdde2', feature: '#a5606f' }, spots: HOLSTEIN_SPOTS }) },
+];
+const breedById = (id) => MUU_BREEDS.find((b) => b.id === id) ?? MUU_BREEDS[0];
+export const muuBreedHead = (id) => breedById(id).head();
+export const muuBreedSVG = (id, className = 'muu-cow') =>
+  `<svg class="${className}" viewBox="-2 0 104 92" aria-hidden="true">${muuBreedHead(id)}</svg>`;
+
+export const muuMascotHTML = (breed) => `
   <button type="button" class="muu" data-muu aria-label="Saluda a Muu">
     <span class="muu-say" aria-live="polite"></span>
-    <svg class="muu-cow" viewBox="-2 0 104 92" aria-hidden="true">${muuHead()}</svg>
+    ${muuBreedSVG(breed)}
   </button>`;
 
 export const MUU_PHRASES = ['¡Muu!', 'Te amuuu', '¡Muuy buena cita!', 'Muuchos besos', '¿Y mi galleta?', 'Muuuu ♥', 'Peinen mi flequillo', '¡Otra libreta!'];

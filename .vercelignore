@@ -2,7 +2,6 @@
 .git
 README.md
 node_modules
-package.json
 serve.mjs
 tests
 tools
