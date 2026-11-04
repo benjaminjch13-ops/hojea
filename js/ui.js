@@ -19,11 +19,12 @@ const PATHS = {
   right: '<path d="M10 6l6 6-6 6"/>',
   star: '<path d="M12 4l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
   brush: '<path d="M20 4c-5 1-9 5-11 9l2 2c4-2 8-6 9-11zM9 14c-3 0-4 2-4 4 0 1-1 2-2 2 2 1 7 1 8-3z"/>',
+  edit: '<path d="M5 19l1-4L16 5l3 3L9 18l-4 1zM14 7l3 3"/>',
   palette: '<path d="M12 4a8 8 0 100 16c1.5 0 2-1 2-2s-1-2 0-3 2-1 3-1h1a2 2 0 002-2c0-4.5-3.6-8-8-8z"/><circle cx="8" cy="11" r="1"/><circle cx="11" cy="8" r="1"/><circle cx="15" cy="8.5" r="1"/>',
 };
 
 export const icon = (name) =>
-  `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name]}</svg>`;
+  `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name]}</svg>`;
 
 // Abre un <dialog>; `mount` recibe el elemento y `close(valor)` para responder.
 export function modal(html, mount, className = '') {

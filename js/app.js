@@ -4,6 +4,9 @@ import { Book3D } from './book3d.js';
 import { coverDefaults, miniBookHTML } from './cover.js';
 import { renderCoverEditor } from './cover-editor.js';
 import { cropPhoto, openCamera } from './capture.js';
+import {
+  closeEditor, deleteImagesOf, ensureScans, forgetScan, initDelulu, newBlankPage, openEditor, pageThumbHTML, pageToJpeg,
+} from './delulu.js';
 import { seedDemoBook } from './demo.js';
 import { buildPdf } from './pdf.js';
 import { THEMES, loadTheme, saveTheme } from './themes.js';
@@ -16,26 +19,65 @@ let routeToken = 0;
 
 async function route() {
   const token = ++routeToken;
-  cleanup?.();
+  // Espera a que se guarde lo que se estaba editando antes de abrir otra pantalla.
+  const leaving = cleanup;
   cleanup = null;
-  const editing = location.hash.match(/^#\/libro\/([^/]+)\/portada$/);
+  await leaving?.();
+  if (token !== routeToken) return;
+  const cover = location.hash.match(/^#\/libro\/([^/]+)\/portada$/);
+  const pages = location.hash.match(/^#\/libro\/([^/]+)\/paginas\/([^/]+)$/);
   const reading = location.hash.match(/^#\/libro\/([^/]+)$/);
   let nextCleanup;
-  if (editing) nextCleanup = await openEditor(editing[1], token);
+  if (cover) nextCleanup = await openCoverRoute(cover[1], token);
+  else if (pages) nextCleanup = await openPagesRoute(pages[1], pages[2], token);
   else if (reading) nextCleanup = await renderBook(reading[1], token);
   else nextCleanup = await renderShelf(token);
   if (token === routeToken) cleanup = nextCleanup ?? null;
   else nextCleanup?.();
 }
 
-async function openEditor(id, token) {
+async function loadBook(id, token) {
   const book = await db.getBook(id);
-  if (token !== routeToken) return undefined;
+  if (token !== routeToken) return null;
   if (!book) {
     location.hash = '#/';
-    return undefined;
+    return null;
   }
-  return renderCoverEditor(app, book);
+  await ensureScans(book);
+  return token === routeToken ? book : null;
+}
+
+async function openCoverRoute(id, token) {
+  const book = await loadBook(id, token);
+  return book ? renderCoverEditor(app, book) : undefined;
+}
+
+// Abre el editor de páginas. `where` es el número de página, o "nueva" para agregar una en blanco.
+async function openPagesRoute(id, where, token) {
+  const book = await loadBook(id, token);
+  if (!book) return undefined;
+  const creating = where === 'nueva' || !book.pages.length;
+  if (creating) {
+    book.pages.push(newBlankPage());
+    await db.saveBook(book);
+  }
+  const index = creating ? book.pages.length - 1 : Math.min(Math.max(0, +where || 0), book.pages.length - 1);
+  const scansBefore = new Set(book.pages.map((p) => p.scan).filter(Boolean));
+  app.innerHTML = '';
+  openEditor(book, index, {
+    tab: creating ? 'plantillas' : undefined,
+    onBack: () => { location.hash = `#/libro/${book.id}`; },
+    onCover: () => { location.hash = `#/libro/${book.id}/portada`; },
+  });
+  return async () => {
+    await closeEditor();
+    // Las fotos de páginas borradas se eliminan aquí, cuando ya no se puede deshacer.
+    const scansNow = new Set(book.pages.map((p) => p.scan).filter(Boolean));
+    await Promise.all([...scansBefore].filter((s) => !scansNow.has(s)).map(async (s) => {
+      forgetScan(s);
+      await db.deletePage(s);
+    }));
+  };
 }
 
 // Carga las imágenes de portada que estén dentro de un elemento.
@@ -104,12 +146,8 @@ function themeDialog() {
 
 // ---------- Cuaderno ----------
 async function renderBook(id, token) {
-  const book = await db.getBook(id);
-  if (token !== routeToken) return;
-  if (!book) {
-    location.hash = '#/';
-    return;
-  }
+  const book = await loadBook(id, token);
+  if (!book) return;
   app.innerHTML = `
     <section class="view book-view">
       <header class="bar">
@@ -124,7 +162,7 @@ async function renderBook(id, token) {
           <button class="icon-btn" data-act="delete" aria-label="Eliminar cuaderno" title="Eliminar cuaderno">${icon('trash')}</button>
         </div>
       </header>
-      <div class="stage"></div>
+      <div class="b-stage"></div>
       <div class="empty-note" hidden>
         <p>Este cuaderno aún no tiene páginas.</p>
         <button class="btn primary" data-act="add">Agregar la primera</button>
@@ -139,6 +177,7 @@ async function renderBook(id, token) {
           <button class="tool" data-act="zoom-in" aria-label="Acercar" title="Acercar">${icon('plus')}</button>
           <button class="tool" data-act="fan" aria-label="Ver en abanico" aria-pressed="false" title="Ver en abanico">${icon('fan')}</button>
           <button class="tool" data-act="export" aria-label="Exportar a PDF" title="Exportar a PDF">${icon('share')}</button>
+          <button class="tool" data-act="edit-pages" aria-label="Decorar páginas" title="Decorar páginas">${icon('edit')}</button>
           <button class="btn primary add-btn" data-act="add">${icon('camera')}<span>Agregar páginas</span></button>
         </div>
       </footer>
@@ -147,7 +186,7 @@ async function renderBook(id, token) {
   const view = app.querySelector('.book-view');
   const slider = view.querySelector('input[type=range]');
   const output = view.querySelector('output');
-  const widget = new Book3D(view.querySelector('.stage'), {
+  const widget = new Book3D(view.querySelector('.b-stage'), {
     onChange({ leaf, leaves, label }) {
       slider.max = leaves;
       slider.value = leaf;
@@ -187,13 +226,14 @@ async function renderBook(id, token) {
       }
       if (result === 'cancel') break;
       if (result === 'skip') continue;
-      const page = await db.addPage(result.blob, result.w, result.h);
+      const page = await db.addScanPage(result.blob, result.w, result.h);
       if (!book.pages.length) book.aspect = Math.min(1.5, Math.max(0.55, result.w / result.h));
       book.pages.push(page);
       await db.saveBook(book);
       saved++;
     }
     if (saved) {
+      await ensureScans(book);
       refresh();
       widget.goTo(widget.leafForPage(firstNew));
       toast(saved === 1 ? 'Página agregada' : `${saved} páginas agregadas`);
@@ -216,11 +256,13 @@ async function renderBook(id, token) {
       <div class="add-options">
         <button class="add-option" data-c="camera">${icon('camera')}<span><strong>Tomar fotos</strong><small>Fotografía las páginas de tu cuaderno, una tras otra.</small></span></button>
         <button class="add-option" data-c="files">${icon('image')}<span><strong>Elegir de tus archivos</strong><small>Puedes seleccionar varias fotos a la vez.</small></span></button>
+        <button class="add-option" data-c="blank">${icon('edit')}<span><strong>Página en blanco o plantilla</strong><small>Diario, agenda, viajes y más, para escribir y decorar.</small></span></button>
       </div>
       <div class="dialog-actions"><button class="btn ghost" data-c="">Cancelar</button></div>`, (d, close) => {
       d.querySelectorAll('[data-c]').forEach((b) => { b.onclick = () => close(b.dataset.c); });
     });
     if (choice === 'files') pick(false);
+    if (choice === 'blank') location.hash = `#/libro/${book.id}/paginas/nueva`;
     if (choice === 'camera') {
       // Sin HTTPS no hay cámara en vivo: se usa la cámara del sistema.
       const shots = navigator.mediaDevices?.getUserMedia && isSecureContext ? await openCamera() : null;
@@ -232,9 +274,13 @@ async function renderBook(id, token) {
   const exportPdf = async () => {
     if (!book.pages.length) { toast('Agrega páginas antes de exportar.'); return; }
     toast('Preparando el PDF…');
-    const images = await Promise.all(book.pages.map(async (p) => ({
-      bytes: new Uint8Array(await (await db.getPageBlob(p.id)).arrayBuffer()), w: p.w, h: p.h,
-    })));
+    // Una foto sin decorar se exporta tal cual; lo demás se dibuja con sus elementos.
+    const images = [];
+    for (const p of book.pages) {
+      images.push(p.scan && !p.elements.length
+        ? { bytes: new Uint8Array(await (await db.getPageBlob(p.scan)).arrayBuffer()), w: p.w, h: p.h }
+        : await pageToJpeg(book, p));
+    }
     const file = new File([buildPdf(images)], `${book.title.replace(/[\\/:*?"<>|]/g, '_')}.pdf`, { type: 'application/pdf' });
     if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
       try { await navigator.share({ files: [file], title: book.title }); } catch { /* cancelado */ }
@@ -259,9 +305,16 @@ async function renderBook(id, token) {
       widget.setFan(on);
     },
     manage: () => managePages(book, refresh),
+    'edit-pages': () => {
+      const n = book.pages.length;
+      const index = Math.min(Math.max(0, +slider.value * 2 - 1), n - 1);
+      location.hash = `#/libro/${book.id}/paginas/${n ? index : 'nueva'}`;
+    },
     async delete() {
       const ok = await confirmDialog(`¿Eliminar "${book.title}"?`, 'Se borrarán sus páginas de este dispositivo. No se puede deshacer.', 'Eliminar');
       if (ok) {
+        const others = (await db.listBooks()).filter((b) => b.id !== book.id);
+        deleteImagesOf(book, others);
         await db.deleteBook(book);
         location.hash = '#/';
       }
@@ -308,19 +361,19 @@ function managePages(book, onChange) {
         grid.innerHTML = '<p class="manage-empty">Aún no hay páginas.</p>';
         return;
       }
-      const urls = await Promise.all(book.pages.map((p) => db.getPageUrl(p.id)));
       grid.innerHTML = book.pages.map((p, i) => `
         <figure class="manage-item">
-          <button class="manage-thumb" data-view="${i}" aria-label="Ver página ${i + 1}">
-            <img src="${urls[i]}" alt="" style="aspect-ratio:${p.w}/${p.h}">
-            ${book.cover.photoId === p.id ? '<span class="cover-badge">Portada</span>' : ''}
+          <button class="manage-thumb" data-view="${i}" aria-label="Ver página ${i + 1}" style="aspect-ratio:${book.aspect || 0.72}">
+            <span class="manage-mini">${pageThumbHTML(p, book, 140)}</span>
+            ${p.scan && book.cover.photoId === p.scan ? '<span class="cover-badge">Portada</span>' : ''}
           </button>
           <figcaption>
             <span>${i + 1}</span>
             <span class="mini-actions">
               <button data-move="${i}:-1" aria-label="Mover página ${i + 1} antes" ${i === 0 ? 'disabled' : ''}>${icon('left')}</button>
               <button data-move="${i}:1" aria-label="Mover página ${i + 1} después" ${i === book.pages.length - 1 ? 'disabled' : ''}>${icon('right')}</button>
-              <button data-cover="${i}" aria-label="Usar página ${i + 1} como portada" aria-pressed="${book.cover.photoId === p.id}">${icon('star')}</button>
+              <button data-edit="${i}" aria-label="Decorar página ${i + 1}">${icon('edit')}</button>
+              <button data-cover="${i}" aria-label="Usar página ${i + 1} como portada" aria-pressed="${!!p.scan && book.cover.photoId === p.scan}" ${p.scan ? '' : 'disabled'}>${icon('star')}</button>
               <button data-del="${i}" aria-label="Eliminar página ${i + 1}">${icon('trash')}</button>
             </span>
           </figcaption>
@@ -336,16 +389,24 @@ function managePages(book, onChange) {
     grid.addEventListener('click', async (e) => {
       const b = e.target.closest('button');
       if (!b) return;
-      if (b.dataset.view !== undefined) {
-        const page = book.pages[+b.dataset.view];
-        openLightbox(await db.getPageUrl(page.id));
+      if (b.dataset.edit !== undefined) {
+        close();
+        location.hash = `#/libro/${book.id}/paginas/${b.dataset.edit}`;
+      } else if (b.dataset.view !== undefined) {
+        const i = +b.dataset.view, page = book.pages[i];
+        // Lo decorado se ve mejor en su editor; una foto sola se amplía.
+        if (page.scan && !page.elements.length) openLightbox(await db.getPageUrl(page.scan));
+        else {
+          close();
+          location.hash = `#/libro/${book.id}/paginas/${i}`;
+        }
       } else if (b.dataset.move) {
         const [i, dir] = b.dataset.move.split(':').map(Number);
         const [p] = book.pages.splice(i, 1);
         book.pages.splice(i + dir, 0, p);
         await commit();
       } else if (b.dataset.cover !== undefined) {
-        const id = book.pages[+b.dataset.cover].id, c = book.cover;
+        const id = book.pages[+b.dataset.cover].scan, c = book.cover;
         if (c.photoId && c.photoOwn) await db.deletePage(c.photoId);
         const removing = c.photoId === id;
         Object.assign(c, removing
@@ -357,8 +418,12 @@ function managePages(book, onChange) {
         const ok = await confirmDialog(`¿Eliminar la página ${i + 1}?`, 'No se puede deshacer.', 'Eliminar');
         if (!ok) return;
         const [p] = book.pages.splice(i, 1);
-        if (book.cover.photoId === p.id) book.cover.photoId = null;
-        await db.deletePage(p.id);
+        // Una foto puede estar en varias páginas duplicadas: solo se borra con la última.
+        if (p.scan && !book.pages.some((q) => q.scan === p.scan)) {
+          if (book.cover.photoId === p.scan) book.cover.photoId = null;
+          forgetScan(p.scan);
+          await db.deletePage(p.scan);
+        }
         await commit();
       }
     });
@@ -381,7 +446,7 @@ async function start() {
       await seedDemoBook();
       await db.setMeta('seeded', true);
     }
-    await loadTheme();
+    await Promise.all([loadTheme(), initDelulu()]);
     navigator.storage?.persist?.();
   } catch (err) {
     console.error(err);

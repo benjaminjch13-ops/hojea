@@ -2,8 +2,8 @@
 import { Book3D } from './book3d.js';
 import { CHARM_PHOTOS } from './charm-photos.js';
 import {
-  CHARM_SHAPES, ELASTICS, FINISHES, LEATHERS, MATERIALS, MAX_CHARMS, PATTERN_NAMES, RIBBONS, SHOP_NAME, SHOP_URL,
-  TEXT_EFFECTS, TEXTURES, TITLE_FONTS, charmName, charmSVG, newCharm, shopMatch, surpriseCover,
+  CHARM_SHAPES, ELASTICS, FINISHES, LEATHERS, MATERIALS, MAX_CHARMS, PATTERN_NAMES, RIBBONS,
+  TEXT_EFFECTS, TEXTURES, TITLE_FONTS, charmName, charmSVG, newCharm, surpriseCover,
 } from './cover.js';
 import * as db from './db.js';
 import { esc, icon, toast } from './ui.js';
@@ -90,17 +90,6 @@ function panelTexto(book) {
     + (c.initials.text ? field('Efecto de las iniciales', chips('initials.fx', TEXT_EFFECTS, c.initials.fx)) : '');
 }
 
-function shopCard(c) {
-  const m = shopMatch(c);
-  const parts = [`cuero ${m.leather.toLowerCase()}`, `elástico ${m.elastic.toLowerCase()}`];
-  if (m.charm) parts.push(`charm ${m.charm.toLowerCase()}`);
-  return `<aside class="shop-card">
-    <strong>¿La quieres de verdad, en cuero?</strong>
-    <p>Lo más parecido en ${esc(SHOP_NAME)}: ${esc(parts.join(', '))}.</p>
-    <a class="btn primary" href="${SHOP_URL}" target="_blank" rel="noopener">Pedir mi libreta</a>
-  </aside>`;
-}
-
 export async function renderCoverEditor(app, book) {
   let tab = 'cuero';
   app.innerHTML = `
@@ -112,7 +101,7 @@ export async function renderCoverEditor(app, book) {
       </header>
       <div class="edit-body">
         <div class="edit-stage-wrap">
-          <div class="stage"></div>
+          <div class="b-stage"></div>
           <div class="edit-stage-tools">
             <button type="button" class="btn ghost-light" data-act="surprise">Sorpréndeme</button>
             <button type="button" class="btn ghost-light" data-act="toggle-open">Ver por dentro</button>
@@ -129,7 +118,7 @@ export async function renderCoverEditor(app, book) {
   const view = app.querySelector('.cover-edit');
   const body = view.querySelector('.panel-body');
   const openBtn = view.querySelector('[data-act=toggle-open]');
-  const widget = new Book3D(view.querySelector('.stage'), {
+  const widget = new Book3D(view.querySelector('.b-stage'), {
     preview: true,
     onChange: ({ leaf }) => { openBtn.textContent = leaf ? 'Ver cerrada' : 'Ver por dentro'; },
   });
@@ -143,7 +132,7 @@ export async function renderCoverEditor(app, book) {
     const c = book.cover, scroll = body.scrollTop;
     view.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab));
     const panels = { cuero: () => panelCuero(c), cierre: () => panelCierre(c), charms: () => panelCharms(c), texto: () => panelTexto(book) };
-    body.innerHTML = panels[tab]() + shopCard(c);
+    body.innerHTML = panels[tab]();
     body.scrollTop = scroll;
   };
 

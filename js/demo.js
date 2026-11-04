@@ -1,6 +1,6 @@
 // Cuaderno de ejemplo con bocetos generados, para que la app no se vea vacía la primera vez.
 import { coverDefaults } from './cover.js';
-import { addPage, newId, saveBook } from './db.js';
+import { addScanPage, newId, saveBook } from './db.js';
 
 const W = 900, H = 1200;
 
@@ -146,7 +146,7 @@ async function renderPage(i) {
   ctx.lineCap = ctx.lineJoin = 'round';
   SCENES[i % SCENES.length](ctx, r);
   const blob = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85));
-  return addPage(blob, W, H);
+  return addScanPage(blob, W, H);
 }
 
 export async function seedDemoBook() {

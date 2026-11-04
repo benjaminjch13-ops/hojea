@@ -12,11 +12,107 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Caveat:wght@400;600&family=Amatic+SC:wght@700&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Playfair+Display:ital,wght@0,600;1,500&family=Dancing+Script:wght@500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400;1,6..96,500&family=Caveat+Brush&family=Figtree:wght@400;500;600;700&family=Caveat:wght@400;600&family=Amatic+SC:wght@700&family=Homemade+Apple&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Playfair+Display:ital,wght@0,600;1,500&family=Gochi+Hand&family=Patrick+Hand&family=Kalam:wght@400;700&family=Shadows+Into+Light&family=Reenie+Beanie&family=Dancing+Script:wght@500;700&family=Indie+Flower&family=Sacramento&family=Nanum+Pen+Script&display=swap">
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/delulu.css">
 </head>
 <body>
+  <!-- iconos-delulu -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-spread" viewBox="0 0 24 24"><path d="M2 5h8a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H2zM22 5h-8a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h8z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 3h12a2 2 0 0 1 2 2v16H7a2 2 0 0 1-2-2z"/><path d="M15 3v18"/></symbol>
+  <symbol id="i-pages" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V5a1 1 0 0 1 1-1h11"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><rect x="4" y="4" width="12" height="12" rx="2"/><path d="M20 8v11a1 1 0 0 1-1 1H8"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4v16h16v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="M21 16V8l-9-5-9 5v8l9 5z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></symbol>
+  <symbol id="i-brush" viewBox="0 0 24 24"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
+  <symbol id="i-align" viewBox="0 0 24 24"><path d="M4 3v18"/><rect x="7" y="5" width="12" height="5" rx="1"/><rect x="7" y="14" width="8" height="5" rx="1"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 2"/><rect x="7" y="7" width="5" height="5" rx="1"/><rect x="12" y="12" width="5" height="5" rx="1"/></symbol>
+  <symbol id="i-ungroup" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="M4 20L15 9M17 3v4M15 5h4M20 9v2M19 10h2M10 3v2M9 4h2"/></symbol>
+  <symbol id="i-multi" viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="12" rx="2"/><path d="M9 3h10a2 2 0 0 1 2 2v10M9 10v6M6 13h6"/></symbol>
+  <symbol id="i-magnet" viewBox="0 0 24 24"><path d="M6 3v8a6 6 0 0 0 12 0V3h-4v8a2 2 0 0 1-4 0V3z"/><path d="M6 7h4M14 7h4"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-up2" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="9" rx="1.5"/><rect x="13" y="4" width="7" height="9" rx="1.5"/><path d="M4 17h7M13 17h7M4 20h5M13 20h5"/></symbol>
+  <symbol id="i-shelf" viewBox="0 0 24 24"><path d="M3 20h18"/><rect x="5" y="6" width="3" height="14" rx=".6"/><rect x="9" y="4" width="3" height="16" rx=".6"/><path d="M14 8.5l2.8-.9 3.6 11.5-2.8.9z"/></symbol>
+  <symbol id="i-stack" viewBox="0 0 24 24"><rect x="4" y="15" width="16" height="4" rx="1"/><rect x="6" y="10" width="13" height="4" rx="1"/><rect x="5" y="5" width="12" height="4" rx="1"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><rect x="3" y="5" width="4" height="4" rx="1"/><rect x="3" y="15" width="4" height="4" rx="1"/><path d="M10 7h11M10 17h11"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2.1-.5-1.3.4-2.4 1.8-2.4H18a3 3 0 0 0 3-3A9 9 0 0 0 12 3z"/><circle cx="7.5" cy="11" r="1" fill="currentColor"/><circle cx="11" cy="7.5" r="1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M4 7l8-4 8 4v10l-8 4-8-4z"/><path d="M4 7l8 4 8-4M12 11v10"/></symbol>
+  <symbol id="i-guide" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 20a2 2 0 0 0 2 2h13v-4M9 8h6M9 11h4"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="i-ig" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.8" cy="7.2" r=".8" fill="currentColor"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-eraser" viewBox="0 0 24 24"><path d="M20 20H8l-5-5 10-10 8 8-6 7"/></symbol>
+</svg>
+  <!-- /iconos-delulu -->
   <main id="app"></main>
+
+  <!-- Editor de páginas: sus ids son los del código original de Delulu Journal V2. -->
+  <section id="open" aria-label="Editor de páginas">
+    <aside class="side" id="lib"></aside>
+    <div class="stage-col">
+      <div class="stagebar">
+        <button class="btn ghost icon" id="btnBack" aria-label="Volver al cuaderno"><svg class="i"><use href="#i-back"/></svg></button>
+        <div class="title" id="openTitle"></div>
+        <div class="spacer"></div>
+        <button class="btn ghost icon" id="btnUndo" aria-label="Deshacer"><svg class="i"><use href="#i-undo"/></svg></button>
+        <button class="btn ghost icon" id="btnRedo" aria-label="Rehacer"><svg class="i"><use href="#i-redo"/></svg></button>
+        <button class="btn ghost icon dt" id="btnDraw" aria-label="Dibujo libre"><svg class="i"><use href="#i-pen"/></svg></button>
+        <button class="btn ghost icon dt" id="btnSnap" aria-label="Guías de alineación" title="Guías de alineación"><svg class="i"><use href="#i-magnet"/></svg></button>
+        <button class="btn ghost icon hide-sm" id="btnView" aria-label="Una o dos páginas"><svg class="i"><use href="#i-spread"/></svg></button>
+        <button class="btn ghost icon hide-sm" id="btnZoomOut" aria-label="Alejar"><svg class="i"><use href="#i-minus"/></svg></button>
+        <button class="btn ghost icon hide-sm" id="btnZoomIn" aria-label="Acercar"><svg class="i"><use href="#i-plus"/></svg></button>
+        <button class="btn ghost dt" id="btnCoverFromOpen"><svg class="i"><use href="#i-book"/></svg><span class="hide-sm">Portada</span></button>
+        <button class="btn primary dt" id="btnLibMobile" hidden><svg class="i"><use href="#i-plus"/></svg>Agregar</button>
+      </div>
+      <div class="stage" id="stage"></div>
+      <div class="stagebar" style="padding-top:0">
+        <button class="btn ghost icon" id="btnPrev" aria-label="Página anterior"><svg class="i"><use href="#i-left"/></svg></button>
+        <span class="hint" id="pageInfo"></span>
+        <button class="btn ghost icon" id="btnNext" aria-label="Página siguiente"><svg class="i"><use href="#i-right"/></svg></button>
+        <div class="spacer"></div>
+        <button class="btn ghost dt" id="btnPageMenu"><svg class="i"><use href="#i-pages"/></svg>Páginas</button>
+      </div>
+      <div class="thumbs" id="thumbs" hidden></div>
+      <nav class="dock mobile-only" aria-label="Herramientas">
+        <button type="button" class="on" data-click="#btnLibMobile"><svg class="i"><use href="#i-plus"/></svg>Agregar</button>
+        <button type="button" data-click="#btnDraw"><svg class="i"><use href="#i-pen"/></svg>Dibujar</button>
+        <button type="button" data-click="#btnPageMenu"><svg class="i"><use href="#i-pages"/></svg>Páginas</button>
+        <button type="button" data-click="#btnCoverFromOpen"><svg class="i"><use href="#i-book"/></svg>Portada</button>
+      </nav>
+      <div id="ctx"></div>
+    </div>
+    <!-- Partes del original que Hojea no usa, pero su código espera encontrar. -->
+    <div hidden>
+      <div id="cover"></div><div id="share"></div><div id="shareStage"></div><div id="cctx"></div>
+      <button id="cUndo"></button><button id="cRedo"></button><button id="cSnap"></button>
+    </div>
+  </section>
   <noscript>Hojea necesita JavaScript para funcionar.</noscript>
   <script type="module" src="js/app.js"></script>
 </body>

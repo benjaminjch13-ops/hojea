@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAX_CHARMS, SHOP_ELASTICS, SHOP_LEATHERS, charmSVG, coverDefaults, migrateBook, newCharm, shade, shopMatch, surpriseCover } from '../js/cover.js';
+import { BASE_ELASTICS, BASE_LEATHERS, MAX_CHARMS, charmSVG, coverDefaults, migrateBook, newCharm, shade, surpriseCover } from '../js/cover.js';
 import { CHARM_PHOTOS } from '../js/charm-photos.js';
 
 test('los cuadernos anteriores a la unión conservan color, páginas y portada', () => {
@@ -10,7 +10,9 @@ test('los cuadernos anteriores a la unión conservan color, páginas y portada',
   assert.equal(book.cover.pattern, 'floral');
   assert.equal(book.cover.photoId, 'p2');
   assert.equal(book.cover.photoOwn, false, 'la foto es una página: no debe borrarse con la portada');
-  assert.deepEqual(book.pages, old.pages);
+  assert.deepEqual(book.pages.map((p) => p.id), ['p1', 'p2']);
+  assert.deepEqual(book.pages.map((p) => p.scan), ['p1', 'p2'], 'cada foto antigua sigue siendo la base de su página');
+  assert.ok(book.pages.every((p) => Array.isArray(p.elements) && p.elements.length === 0 && p.bg));
   assert.equal(book.aspect, 0.75);
   assert.ok(!('palette' in book) && !('coverPageId' in book));
 });
@@ -29,32 +31,13 @@ test('la libreta por defecto es la Delulu real y usa un charm que existe', () =>
   assert.ok(c.charms.length <= MAX_CHARMS);
 });
 
-test('shopMatch elige la opción real más cercana', () => {
-  const c = coverDefaults();
-  c.color = '#6f4228';
-  c.elastic.color = '#2558ca';
-  const m = shopMatch(c);
-  assert.equal(m.leather, 'Café');
-  assert.equal(m.elastic, 'Azul rey');
-  assert.equal(m.charm, 'Concha');
-});
-
-test('shopMatch reconoce el tornasol y no inventa charms de la tienda', () => {
-  const c = coverDefaults();
-  c.finish = 'tornasol';
-  c.charms = [newCharm('heart')];
-  const m = shopMatch(c);
-  assert.equal(m.leather, 'Tornasol');
-  assert.equal(m.charm, null);
-});
-
-test('Sorpréndeme solo usa opciones que se pueden pedir y conserva el resto', () => {
+test('Sorpréndeme usa colores y charms reales y conserva el resto', () => {
   const base = coverDefaults();
   base.initials.text = 'SM';
   for (let i = 0; i < 40; i++) {
     const c = surpriseCover(base);
-    assert.ok(SHOP_LEATHERS.some((l) => l[2] === c.color));
-    assert.ok(SHOP_ELASTICS.some((l) => l[2] === c.elastic.color));
+    assert.ok(BASE_LEATHERS.some((l) => l[2] === c.color));
+    assert.ok(BASE_ELASTICS.some((l) => l[2] === c.elastic.color));
     assert.ok(CHARM_PHOTOS[c.charms[0].shape]);
     assert.equal(c.initials.text, 'SM');
   }

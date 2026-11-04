@@ -1,6 +1,7 @@
 // Libro 3D con CSS. Todo se deriva de un solo número: `pos`, cuántas hojas se han pasado.
 import { backFaceHTML, bandFill, bandHTML, charmsHTML, coverFaceHTML, leatherLayers } from './cover.js';
 import { getPageUrl } from './db.js';
+import { pageSurfaceHTML } from './delulu.js';
 import { esc } from './ui.js';
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -16,7 +17,7 @@ export class Book3D {
     this.onChange = onChange;
     this.preview = preview;
     this.root = document.createElement('div');
-    this.root.className = 'book';
+    this.root.className = 'b-book';
     stage.append(this.root);
 
     this.pos = 0; this.target = 0;
@@ -87,7 +88,7 @@ export class Book3D {
     this.leaves = [];
     for (let i = 0; i < this.n; i++) {
       const el = document.createElement('div');
-      el.className = 'leaf';
+      el.className = 'b-leaf';
       this.root.append(el);
       this.leaves.push({ el, last: '' });
       this.paintLeaf(i);
@@ -107,6 +108,7 @@ export class Book3D {
       + this.faceHtml(this.sides[i * 2 + 1], 'back', i === 0);
     leaf.shades = leaf.el.querySelectorAll('.shade');
     leaf.imgs = leaf.el.querySelectorAll('img[data-id]');
+    leaf.pages = leaf.el.querySelectorAll('.pg-fit');
     leaf.last = '';
   }
 
@@ -117,10 +119,9 @@ export class Book3D {
       const html = side.type === 'cover' ? coverFaceHTML(b) : backFaceHTML(b);
       return `<div class="face ${cls} lea" style="background-color:${c.color}">${html}<div class="shade"></div></div>`;
     }
-    const inner = side.type === 'page'
-      ? `<img data-id="${side.page.id}" alt="Página ${side.num}" draggable="false">`
-      : '';
-    const sheet = `<div class="sheet">${inner}<div class="gutter"></div><div class="shade"></div></div>`;
+    // El contenido de la hoja se dibuja solo cuando está cerca (ver loadImages).
+    const inner = side.type === 'page' ? `<div class="pg-fit" data-page="${side.num - 1}" aria-label="Página ${side.num}"></div>` : '';
+    const sheet = `<div class="b-sheet">${inner}<div class="gutter"></div><div class="shade"></div></div>`;
     return bound
       ? `<div class="face ${cls} lea-inside" style="background-color:${c.color}">${leatherLayers(c)}${sheet}</div>`
       : `<div class="face ${cls}">${sheet}</div>`;
@@ -169,6 +170,7 @@ export class Book3D {
     this.root.style.setProperty('--w', `${w}px`);
     this.root.style.setProperty('--h', `${h}px`);
     this.root.style.setProperty('--u', `${this.u}px`);
+    this.root.style.setProperty('--pg-s', String((w * 0.976) / DESIGN_WIDTH));
     this.render(true);
   }
 
@@ -198,7 +200,7 @@ export class Book3D {
   // ---- Punteros ----
   onDown(e) {
     if (e.button) return;
-    const onBook = !this.preview && e.target.closest?.('.leaf');
+    const onBook = !this.preview && e.target.closest?.('.b-leaf');
     this.drag = {
       id: e.pointerId, mode: onBook ? 'flip' : 'orbit',
       x: e.clientX, y: e.clientY, startPos: this.pos, rx: this.rxT, ry: this.ryT,
@@ -257,7 +259,7 @@ export class Book3D {
       }
     } else if (!this.preview) {
       this.setOrbit(REST_RX, this.target === 0 ? this.restRy : 0);
-    } else if (!d.moved && e.target.closest?.('.leaf, .strap')) {
+    } else if (!d.moved && e.target.closest?.('.b-leaf, .strap')) {
       this.goTo(this.target ? 0 : 1);
     }
     this.vel = 0;
@@ -363,11 +365,15 @@ export class Book3D {
     }
   }
 
-  // Solo se cargan las fotos cercanas, para que los cuadernos largos no consuman tanta memoria.
+  // Solo se dibujan las hojas cercanas, para que los cuadernos largos no consuman tanta memoria.
   loadImages(center) {
     const range = this.fanMode ? this.n : IMAGE_WINDOW;
     this.leaves.forEach((leaf, i) => {
       const near = Math.abs(i - center) <= range || i === 0;
+      leaf.pages.forEach((box) => {
+        if (!near) { box.innerHTML = ''; return; }
+        if (!box.firstChild) box.innerHTML = pageSurfaceHTML(this.book.pages[+box.dataset.page], this.book);
+      });
       leaf.imgs.forEach(async (img) => {
         if (!near) { img.removeAttribute('src'); return; }
         if (img.getAttribute('src')) return;

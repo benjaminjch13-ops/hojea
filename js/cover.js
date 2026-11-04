@@ -3,17 +3,15 @@
 import { CHARM_PHOTOS } from './charm-photos.js';
 import { esc } from './ui.js';
 
-export const SHOP_URL = 'https://delulusjournal.vercel.app/#pedir';
-export const SHOP_NAME = 'Delulu Journal';
 const TORNASOL = '#e6e1ee';
 
-// Lo que de verdad se vende en la tienda: [id, nombre, color].
-export const SHOP_LEATHERS = [['cafe', 'Café', '#6E4127'], ['rojizo', 'Café rojizo', '#8C3B2A'], ['azul', 'Azul', '#2F4A73'], ['blanco', 'Blanco', '#F2EEE6'], ['rosa', 'Rosa', '#E7A8B1'], ['tornasol', 'Tornasol', TORNASOL]];
-export const SHOP_ELASTICS = [['azul', 'Azul rey', '#2457C9'], ['negro', 'Negro', '#1f1b1a'], ['cafe', 'Café', '#5a3a28'], ['crema', 'Crema', '#efe3cc'], ['rosa', 'Rosa', '#EDB8B7'], ['amarillo', 'Amarillo', '#F2D36B'], ['verde', 'Verde Delulu', '#386660'], ['vino', 'Vino', '#7F3A3C']];
+// Colores de las libretas Delulu: [id, nombre, color].
+export const BASE_LEATHERS = [['cafe', 'Café', '#6E4127'], ['rojizo', 'Café rojizo', '#8C3B2A'], ['azul', 'Azul', '#2F4A73'], ['blanco', 'Blanco', '#F2EEE6'], ['rosa', 'Rosa', '#E7A8B1'], ['tornasol', 'Tornasol', TORNASOL]];
+export const BASE_ELASTICS = [['azul', 'Azul rey', '#2457C9'], ['negro', 'Negro', '#1f1b1a'], ['cafe', 'Café', '#5a3a28'], ['crema', 'Crema', '#efe3cc'], ['rosa', 'Rosa', '#EDB8B7'], ['amarillo', 'Amarillo', '#F2D36B'], ['verde', 'Verde Delulu', '#386660'], ['vino', 'Vino', '#7F3A3C']];
 
-// Los digitales suman colores que no están en la tienda.
-export const LEATHERS = [...SHOP_LEATHERS.map(([, n, c]) => [n, c]), ['Coñac', '#8a5233'], ['Arena', '#c9a57d'], ['Salvia', '#7f9177'], ['Lavanda', '#8d81a6'], ['Burdeos', '#6e2b33'], ['Verde Delulu', '#386660'], ['Negro', '#262020']];
-export const ELASTICS = [...SHOP_ELASTICS.map(([, n, c]) => [n, c]), ['Lavanda', '#a596c4'], ['Oro', '#c9a24a']];
+// Más tonos para elegir.
+export const LEATHERS = [...BASE_LEATHERS.map(([, n, c]) => [n, c]), ['Coñac', '#8a5233'], ['Arena', '#c9a57d'], ['Salvia', '#7f9177'], ['Lavanda', '#8d81a6'], ['Burdeos', '#6e2b33'], ['Verde Delulu', '#386660'], ['Negro', '#262020']];
+export const ELASTICS = [...BASE_ELASTICS.map(([, n, c]) => [n, c]), ['Lavanda', '#a596c4'], ['Oro', '#c9a24a']];
 export const RIBBONS = ['#b5646d', '#d9a1a8', '#c9a24a', '#7f9474', '#7d9ab3', '#8e7bb5', '#3b2d26', '#f1e6d6'];
 export const CHARM_SHAPES = [['croissant', 'Croissant'], ['heart', 'Corazón'], ['star', 'Estrella'], ['flower', 'Flor'], ['moon', 'Luna'], ['tree', 'Árbol'], ['letter', 'Inicial'], ['bead', 'Cuenta'], ['key', 'Llave'], ['leaf', 'Hoja'], ['shell', 'Concha']];
 export const MATERIALS = [['oro', 'Oro'], ['plata', 'Plata'], ['bronce', 'Bronce'], ['esmalte', 'Esmalte'], ['perla', 'Perla']];
@@ -63,9 +61,13 @@ export function coverDefaults() {
 // Convierte los cuadernos creados antes de la unión, sin perder su color ni sus páginas.
 const OLD_PALETTES = { verde: '#17945a', granate: '#b92d48', noche: '#1e2a78', mostaza: '#f2b632', laguna: '#0f766e', lino: '#efe8da', carbon: '#2b2b33' };
 const OLD_PATTERNS = { flores: 'floral', puntos: 'puntos', rayas: 'rayas' };
+const migratePage = (p) => (p.elements ? p : { ...p, scan: p.id, bg: { type: 'plain', color: '#fbf8f0' }, elements: [] });
 export function migrateBook(book) {
-  if (!book || book.cover) return book;
-  const { palette, pattern, coverPageId, ...rest } = book;
+  if (!book) return book;
+  let result = book;
+  if (book.pages?.some((p) => !p.elements)) result = { ...result, pages: book.pages.map(migratePage) };
+  if (result.cover) return result;
+  const { palette, pattern, coverPageId, ...rest } = result;
   const cover = coverDefaults();
   cover.color = OLD_PALETTES[palette] ?? cover.color;
   cover.pattern = OLD_PATTERNS[pattern] ?? 'none';
@@ -73,35 +75,17 @@ export function migrateBook(book) {
   return { ...rest, cover };
 }
 
-// Lo más parecido que se puede pedir en la tienda.
-export function shopMatch(cover) {
-  const rgb = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
-  const near = (list, hex) => {
-    const [r, g, b] = rgb(hex);
-    let best = list[0], bestD = Infinity;
-    for (const item of list) {
-      const [R, G, B] = rgb(item[2]);
-      const d = (R - r) ** 2 + (G - g) ** 2 + (B - b) ** 2;
-      if (d < bestD) { bestD = d; best = item; }
-    }
-    return best[1];
-  };
-  const leather = isIridescent(cover) ? 'Tornasol' : near(SHOP_LEATHERS, cover.color);
-  const charm = cover.charms.map((c) => CHARM_PHOTOS[c.shape]?.n).find(Boolean) ?? null;
-  return { leather, elastic: near(SHOP_ELASTICS, cover.elastic.color), charm };
-}
-
-// Una libreta al azar, siempre con opciones que existen en la tienda.
+// Una libreta al azar.
 export function surpriseCover(cover) {
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
   const shapes = Object.keys(CHARM_PHOTOS);
   const orient = pick(['horizontal', 'horizontal', 'vertical']);
   return {
     ...cover,
-    color: pick(SHOP_LEATHERS)[2],
+    color: pick(BASE_LEATHERS)[2],
     texture: pick(TEXTURES)[0],
     finish: 'mate',
-    elastic: { ...cover.elastic, color: pick(SHOP_ELASTICS)[2], orient, pos: orient === 'horizontal' ? 0.45 : 0.84 },
+    elastic: { ...cover.elastic, color: pick(BASE_ELASTICS)[2], orient, pos: orient === 'horizontal' ? 0.45 : 0.84 },
     charms: [{ ...newCharm(pick(shapes)), size: 1.15 }],
     title: { ...cover.title, fx: pick(['grabado', 'dorado', 'plata']) },
   };

@@ -61,7 +61,7 @@ export async function deletePage(id) {
 }
 
 export async function deleteBook(book) {
-  await Promise.all(book.pages.map((p) => deletePage(p.id)));
+  await Promise.all(book.pages.filter((p) => p.scan).map((p) => deletePage(p.scan)));
   if (book.cover?.photoId && book.cover.photoOwn) await deletePage(book.cover.photoId);
   await run('books', 'readwrite', (s) => s.delete(book.id));
 }
@@ -77,3 +77,15 @@ export function getPageUrl(id) {
 
 export const getMeta = async (key) => (await run('meta', 'readonly', (s) => s.get(key)))?.value;
 export const setMeta = (key, value) => run('meta', 'readwrite', (s) => s.put({ key, value }));
+export const deleteMeta = (key) => run('meta', 'readwrite', (s) => s.delete(key));
+export async function getMetaByPrefix(prefix) {
+  const range = IDBKeyRange.bound(prefix, `${prefix}￿`);
+  const rows = await run('meta', 'readonly', (s) => s.getAll(range));
+  return Object.fromEntries(rows.map((r) => [r.key.slice(prefix.length), r.value]));
+}
+
+// Una foto de cuaderno convertida en página: la foto es la base y encima se puede decorar.
+export async function addScanPage(blob, w, h) {
+  const { id } = await addPage(blob, w, h);
+  return { id: newId(), scan: id, w, h, bg: { type: 'plain', color: '#fbf8f0' }, elements: [] };
+}

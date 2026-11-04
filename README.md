@@ -2,7 +2,7 @@
 
 Digitaliza tus cuadernos de papel y hojéalos en 3D, dentro de una libreta de cuero hecha a tu gusto. Funciona en el navegador, se puede instalar como app y guarda tus fotos en tu dispositivo.
 
-La personalización de las libretas viene de [Delulu Journal V2](https://github.com/benjaminjch13-ops/delulusV2), y los charms reales y el enlace de pedido, de su [tienda](https://github.com/benjaminjch13-ops/delulusjournal).
+La personalización de las libretas, por fuera y por dentro, viene de [Delulu Journal V2](https://github.com/benjaminjch13-ops/delulusV2), y los charms reales, de [delulusjournal](https://github.com/benjaminjch13-ops/delulusjournal).
 
 ## Cómo abrirla
 
@@ -17,7 +17,7 @@ Luego abre <http://localhost:5173>.
 ## Qué hace
 
 - **Libretas a tu gusto:** modelo con solapa y remaches o con costura, color, textura, acabado, patrón e imagen de portada; elástico y cinta marcapáginas; hasta 6 charms, reales o dibujados; título e iniciales grabados, en oro, en plata o impresos. También tiene un botón "Sorpréndeme".
-- **Pedir la de verdad:** el editor muestra lo más parecido a tu diseño en la tienda Delulu y enlaza al pedido.
+- **Decorar por dentro:** cualquier página, sea una foto de tu cuaderno o una en blanco, lleva stickers, cintas, papeles, notas, texto, fotos con forma y marco, y dibujo libre. Incluye fondos de papel, plantillas y paquetes temáticos, quitar fondo, favoritos, guías de alineación y deshacer.
 - **Fondos:** 9 temas para la app.
 - **Agregar páginas:** toma fotos seguidas con la cámara, elige varias de tus archivos o arrástralas a la ventana.
 - **Recorte:** detecta los bordes de la hoja, deja ajustar las esquinas con lupa y endereza la perspectiva. Filtros: Original, Realce y Blanco y negro.
@@ -57,8 +57,9 @@ npm test
 | `js/imaging.js` | Perspectiva, detección de bordes y filtros |
 | `js/pdf.js` | Exportación a PDF |
 | `js/db.js` | Almacenamiento local |
-| `js/cover.js` | Libreta de cuero: materiales, dibujo y relación con la tienda |
-| `js/cover-editor.js` | Editor de la libreta |
+| `js/cover.js` | Libreta de cuero: materiales y dibujo |
+| `js/cover-editor.js` | Editor de la portada |
+| `js/delulu.js`, `css/delulu.css` | Editor de páginas, traído de Delulu Journal V2 |
 | `js/charm-photos.js` | Fotos de los charms reales |
 | `js/themes.js` | Fondos de la app |
 | `js/demo.js` | Cuaderno de ejemplo |
