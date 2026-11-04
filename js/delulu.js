@@ -1,7 +1,8 @@
 // Editor de páginas de Delulu Journal V2 (repositorio delulusV2), adaptado a Hojea.
 // Lo de abajo de "Código de Delulu" es el original; este encabezado lo conecta con el almacenamiento de Hojea.
 import { confirmDialog, toast as showToast } from './ui.js';
-import { charmSVG, engraveColor } from './cover.js';
+import { COW_SPOTS, charmSVG, engraveColor, paintFur } from './cover.js';
+import { cowStickers } from './cow.js';
 import { deleteMeta, getMeta, getMetaByPrefix, getPageUrl, saveBook, setMeta } from './db.js';
 
 let S = null;
@@ -144,6 +145,7 @@ function makeTex(kind){if(TEX[kind])return TEX[kind];const c=document.createElem
   if(kind==='granulado'){for(let i=0;i<900;i++){const px=Math.random()*220,py=Math.random()*220,r=1.5+Math.random()*3;const g=x.createRadialGradient(px-r*.3,py-r*.3,0,px,py,r);g.addColorStop(0,'rgba(255,255,255,.18)');g.addColorStop(1,'rgba(0,0,0,.22)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill()}}
   if(kind==='natural'){for(let i=0;i<26;i++){const px=Math.random()*220,py=Math.random()*220,r=20+Math.random()*50;const g=x.createRadialGradient(px,py,0,px,py,r);const d=Math.random()<.5;g.addColorStop(0,d?'rgba(0,0,0,.14)':'rgba(255,255,255,.10)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,220,220)}
     x.strokeStyle='rgba(0,0,0,.08)';for(let i=0;i<14;i++){x.beginPath();let px=Math.random()*220,py=Math.random()*220;x.moveTo(px,py);for(let j=0;j<4;j++){px+=(Math.random()-.5)*40;py+=(Math.random()-.5)*20;x.lineTo(px,py)}x.stroke()}}
+  if(kind==='peludo'){paintFur(x,220);}
   if(kind==='saffiano'){x.strokeStyle='rgba(0,0,0,.18)';x.lineWidth=1;for(let i=-220;i<440;i+=4){x.beginPath();x.moveTo(i,0);x.lineTo(i+220,220);x.stroke();x.beginPath();x.moveTo(i+220,0);x.lineTo(i,220);x.stroke()}}
   TEX[kind]=c.toDataURL('image/jpeg',.82);document.documentElement.style.setProperty('--tx-'+kind,`url(${TEX[kind]})`);return TEX[kind]}
 const texVar=k=>(makeTex(k),`var(--tx-${k})`);
@@ -1012,6 +1014,22 @@ function packItems(){const a=ED.a,[W,H]=dims(a),pk={st:curPack==='basicas'?['sta
 
 
 
+/* ==================== Vaquitas ==================== */
+CATS.splice(1,0,['vaquitas','Vaquitas']);
+STICKERS.push(...cowStickers(W));
+PACKS.unshift({id:'vaquitas',n:'Vaquitas',st:['cow-peluda','cow-rubia','cow-negra','cow-entera','cow-clasica','cow-cencerro','cow-leche','cow-teamuuu','cow-muu','cow-muuy','cow-besos','cow-cita','daisy','heart'],pages:[
+ ['Nuestra cita',(W,H)=>({bg:'dots',bgc:'#FBF3E6',els:[tl('Nuestra cita',W,{font:F.dance,fs:48,color:'#7a4a24'}),ST('cow-peluda',W-140,24,110,{r:6}),
+   T('Fecha: ____________\nLugar: ____________',46,120,W-190,84,{fs:25,font:F.patrick,color:'#5a3a24'}),
+   PP('polaroid',46,220,W*.5,W*.6,{r:-4,color:'#ecd9bd'}),TP(96,206,130,-8,{color:'#F6C6CF',pat:'dots'}),
+   NT('Lo mejor fue…\n',W*.56,250,W*.37,{bgc:'#F6E08A',r:3,font:F.gochi}),ST('daisy',W*.8,H*.56,60,{r:12}),
+   T('Le damos estas vaquitas:',46,H-154,W-92,40,{fs:24,font:F.patrick,color:'#5a3a24'}),
+   ...[0,1,2,3,4].map(i=>ST('cow-rubia',46+i*70,H-112,62,{r:i%2?5:-5})),ST('cow-teamuuu',W-190,H-64,150,{h:60,r:-3})]})],
+ ['Citas por hacer',(W,H)=>({bg:'lines',bgc:'#FFFDF6',els:[tl('Citas por hacer',W,{font:F.reenie,fs:58,color:'#7a4a24'}),ST('cow-entera',W-150,26,116),
+   T('[ ] Ir a conocer vaquitas peludas\n[ ] Picnic al atardecer\n[ ] Cocinar algo nuevo\n[ ] Noche de pelis y galletas\n[ ] \n[ ] \n[ ] ',50,140,W-100,H*.55,{fs:28,font:F.gochi,color:'#3c2315'}),
+   ST('cow-leche',46,H-150,110,{r:-8}),ST('cow-cencerro',W/2-40,H-140,84,{r:8}),ST('cow-muu',W-170,H-110,120,{h:65,r:5})]})],
+ ['Carta de amuur',(W,H)=>({bg:'kraft',els:[PP('torn',40,110,W-80,H*.62,{r:-1,color:'#FFFDF6'}),T('Para ti:',70,132,W-140,50,{fs:32,font:F.dance,color:'#7a4a24'}),T('',70,190,W-140,H*.4,{fs:24,font:F.kalam}),
+   ST('cow-clasica',W/2-60,12,120,{r:-4}),ST('cow-besos',W-250,H-122,210,{h:66,r:-3}),ST('cow-peluda',40,H-142,110,{r:-8}),TP(W-180,98,130,10,{color:'#F2CDA0',pat:'stripes'})]})]]});
+
 /* ==================== Exportación de Delulu ==================== */
 const isTornasol = (c) => (c.color || '').toLowerCase() === TORNASOL || c.finish === 'tornasol';
 function coverPattern(ctx,p,W,H){const line=(x1,y1,x2,y2)=>{ctx.moveTo(x1,y1);ctx.lineTo(x2,y2)};ctx.save();
@@ -1019,6 +1037,7 @@ function coverPattern(ctx,p,W,H){const line=(x1,y1,x2,y2)=>{ctx.moveTo(x1,y1);ct
   if(p==='puntos'){ctx.fillStyle='rgba(255,255,255,.13)';for(let x=8;x<W;x+=16)for(let y=8;y<H;y+=16){ctx.beginPath();ctx.arc(x,y,1.5,0,7);ctx.fill()}}
   if(p==='rayas'){ctx.fillStyle='rgba(0,0,0,.08)';for(let x=18;x<W;x+=22)ctx.fillRect(x,0,4,H)}
   if(p==='floral'){for(let x=20;x<W+40;x+=40)for(let y=20;y<H+40;y+=40){ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.arc(x+20,y+20,8,0,7);ctx.fill()}}
+  if(p==='vaca'){const k=W/560,step=400*k;ctx.fillStyle='#231a15';for(let oy=0;oy<H;oy+=step)for(let ox=0;ox<W;ox+=step){ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);for(const d of COW_SPOTS)ctx.fill(new Path2D(d));ctx.restore()}}
   if(p==='cuadros'){ctx.fillStyle='rgba(0,0,0,.09)';for(let x=0;x<W;x+=34)ctx.fillRect(x,0,2,H);for(let y=0;y<H;y+=34)ctx.fillRect(0,y,W,2)}
   ctx.restore()}
 function drawBand(ctx,a,W,H,back){const e=a.cover.elastic,t=e.width||9,c=e.color,vert=e.orient!=='horizontal',pos=e.pos??(vert?.84:.6);
@@ -1042,7 +1061,7 @@ async function renderCover(ctx,a,W,H,back){const c=a.cover;ctx.save();ctx.beginP
   const sh=ctx.createLinearGradient(0,0,16,0);sh.addColorStop(0,'rgba(0,0,0,.3)');sh.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=sh;ctx.fillRect(0,0,16,H);
   if(c.model==='delulu'){ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillRect(W*.86,0,W*.14,H);
     ctx.save();ctx.shadowColor='rgba(0,0,0,.42)';ctx.shadowBlur=9*ctx.__s;ctx.shadowOffsetX=3*ctx.__s;rr(ctx,-20,-4,W*.86+20,H+8,[0,W*.06,W*.06,0]);ctx.fillStyle=c.color;ctx.fill();ctx.restore();
-    ctx.save();rr(ctx,-20,-4,W*.86+20,H+8,[0,W*.06,W*.06,0]);ctx.clip();await texFill(ctx,c.texture||'liso','overlay',c.texture==='liso'?.5:.85,W,H);ctx.restore();
+    ctx.save();rr(ctx,-20,-4,W*.86+20,H+8,[0,W*.06,W*.06,0]);ctx.clip();await texFill(ctx,c.texture||'liso','overlay',c.texture==='liso'?.5:.85,W,H);coverPattern(ctx,c.pattern,W,H);ctx.restore();
     for(const y of[H*.045,H*.955]){const r=W*.011,g=ctx.createRadialGradient(W*.027-r*.3,y-r*.3,0,W*.027,y,r);g.addColorStop(0,'#9aa0a6');g.addColorStop(1,'#2c2f33');ctx.fillStyle=g;ctx.beginPath();ctx.arc(W*.027,y,r,0,7);ctx.fill()}}
   else{ctx.strokeStyle='rgba(255,240,220,.45)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);rr(ctx,7,7,W-14,H-14,[6,10,10,6]);ctx.stroke();ctx.setLineDash([])}ctx.restore();
   if(isTornasol(c)){ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.6;let g;

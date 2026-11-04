@@ -1,4 +1,4 @@
-// Pantallas y navegación de Hojea.
+// Pantallas y navegación de Date's with Muu.
 import * as db from './db.js';
 import { Book3D } from './book3d.js';
 import { coverDefaults, miniBookHTML } from './cover.js';
@@ -9,6 +9,7 @@ import {
 } from './delulu.js';
 import { seedDemoBook } from './demo.js';
 import { openExportDialog } from './export-dialog.js';
+import { bindHome, homeHTML } from './home.js';
 import { THEMES, loadTheme, saveTheme } from './themes.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
 
@@ -16,6 +17,7 @@ const app = document.getElementById('app');
 const pageCount = (n) => (n === 1 ? '1 página' : `${n} páginas`);
 let cleanup = null;
 let routeToken = 0;
+let justCreated = null;
 
 async function route() {
   const token = ++routeToken;
@@ -49,7 +51,10 @@ async function loadBook(id, token) {
 
 async function openCoverRoute(id, token) {
   const book = await loadBook(id, token);
-  return book ? renderCoverEditor(app, book) : undefined;
+  if (!book) return undefined;
+  const drop = justCreated === id;
+  justCreated = null;
+  return renderCoverEditor(app, book, { drop });
 }
 
 // Abre el editor de páginas. `where` es el número de página, o "nueva" para agregar una en blanco.
@@ -92,18 +97,14 @@ function loadCoverPhotos(root) {
 async function renderShelf(token) {
   const books = await db.listBooks();
   if (token !== routeToken) return;
+  const head = await homeHTML(books);
+  if (token !== routeToken) return;
   app.innerHTML = `
     <section class="view shelf">
-      <header class="shelf-head">
-        <div>
-          <h1>Hojea</h1>
-          <p>Tus cuadernos de papel, en libretas hechas a tu gusto.</p>
-        </div>
-        <button class="icon-btn" data-theme aria-label="Cambiar el fondo" title="Cambiar el fondo">${icon('palette')}</button>
-      </header>
+      ${head}
       <div class="shelf-grid">
-        ${books.map((b) => `
-          <a class="shelf-item" href="#/libro/${b.id}">
+        ${books.map((b, i) => `
+          <a class="shelf-item" href="#/libro/${b.id}" style="--i:${i}">
             ${miniBookHTML(b)}
             <span class="shelf-meta"><strong>${esc(b.title)}</strong><span>${pageCount(b.pages.length)}</span></span>
           </a>`).join('')}
@@ -115,14 +116,17 @@ async function renderShelf(token) {
     </section>`;
   loadCoverPhotos(app);
   app.querySelector('[data-theme]').onclick = themeDialog;
-  // Una libreta nueva empieza en el editor: personalizarla es el primer paso.
-  app.querySelector('[data-new]').onclick = async () => {
+  // Una libreta nueva empieza en el editor, donde cae del cielo: personalizarla es el primer paso.
+  const createBook = async (title) => {
     const book = {
-      id: db.newId(), title: 'Mi libreta', cover: coverDefaults(), aspect: 0.72, pages: [], createdAt: Date.now(),
+      id: db.newId(), title, cover: coverDefaults(), aspect: 0.72, pages: [], createdAt: Date.now(),
     };
     await db.saveBook(book);
+    justCreated = book.id;
     location.hash = `#/libro/${book.id}/portada`;
   };
+  app.querySelector('[data-new]').onclick = () => createBook('Mi libreta');
+  await bindHome(app.querySelector('.shelf'), books, { createBook });
 }
 
 function themeDialog() {
@@ -427,7 +431,7 @@ async function start() {
     navigator.storage?.persist?.();
   } catch (err) {
     console.error(err);
-    app.innerHTML = '<p class="fatal">No se pudo abrir el almacenamiento de este navegador. Si estás en una ventana privada, abre Hojea en una normal.</p>';
+    app.innerHTML = '<p class="fatal">No se pudo abrir el almacenamiento de este navegador. Si estás en una ventana privada, abre la app en una normal.</p>';
     return;
   }
   // El paso entre pantallas es continuo: el libro y el panel se transforman en vez de saltar.
@@ -444,6 +448,7 @@ async function start() {
     const transition = document.startViewTransition(go);
     transition.ready.catch(() => {});
     transition.finished.catch(() => {});
+    transition.updateCallbackDone.catch(() => {});
     setTimeout(() => {
       if (started) return;
       transition.skipTransition();

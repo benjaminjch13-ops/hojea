@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BASE_ELASTICS, BASE_LEATHERS, MAX_CHARMS, charmSVG, coverDefaults, migrateBook, newCharm, shade, surpriseCover } from '../js/cover.js';
+import { BASE_ELASTICS, BASE_LEATHERS, CHARM_SHAPES, COW_PRESETS, COW_SPOTS, MAX_CHARMS, charmSVG, coverDefaults, migrateBook, newCharm, shade, surpriseCover } from '../js/cover.js';
 import { CHARM_PHOTOS } from '../js/charm-photos.js';
 
 test('los cuadernos anteriores a la unión conservan color, páginas y portada', () => {
@@ -27,7 +27,8 @@ test('la libreta por defecto es la Delulu real y usa un charm que existe', () =>
   const c = coverDefaults();
   assert.equal(c.model, 'delulu');
   assert.equal(c.color, '#6E4127');
-  assert.ok(CHARM_PHOTOS[c.charms[0].shape]);
+  assert.equal(c.charms[0].shape, 'cow');
+  assert.ok(CHARM_SHAPES.some(([id]) => id === 'cow'));
   assert.ok(c.charms.length <= MAX_CHARMS);
 });
 
@@ -42,6 +43,21 @@ test('Sorpréndeme usa colores y charms reales y conserva el resto', () => {
     assert.equal(c.initials.text, 'SM');
   }
   assert.equal(base.color, '#6E4127', 'no debe modificar la portada original');
+});
+
+test('los diseños de vaquita son válidos y no modifican la portada original', () => {
+  const base = coverDefaults();
+  base.initials.text = 'AB';
+  const before = JSON.stringify(base);
+  for (const preset of COW_PRESETS) {
+    const c = preset.apply(base);
+    assert.ok(c.charms.length && c.charms.length <= MAX_CHARMS);
+    assert.ok(c.charms.every((ch) => CHARM_SHAPES.some(([id]) => id === ch.shape)));
+    assert.equal(c.initials.text, 'AB');
+    assert.ok(charmSVG(c.charms[0]).includes('<path'));
+  }
+  assert.equal(JSON.stringify(base), before);
+  assert.ok(COW_SPOTS.every((d) => d.startsWith('M') && d.endsWith('z')));
 });
 
 test('charmSVG escapa la inicial y dibuja las fotos reales', () => {

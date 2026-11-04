@@ -40,7 +40,7 @@ export async function listBooks() {
   return books.map(migrateBook).sort((a, b) => b.createdAt - a.createdAt);
 }
 export const getBook = async (id) => migrateBook(await run('books', 'readonly', (s) => s.get(id)));
-export const saveBook = (book) => run('books', 'readwrite', (s) => s.put(book));
+export const saveBook = (book) => { book.updated = Date.now(); return run('books', 'readwrite', (s) => s.put(book)); };
 
 export async function addPage(blob, w, h) {
   const id = newId();

@@ -1,7 +1,7 @@
 {
-  "name": "Hojea",
-  "short_name": "Hojea",
-  "description": "Digitaliza tus cuadernos de papel y hojéalos en 3D.",
+  "name": "Date's with Muu",
+  "short_name": "Muu",
+  "description": "Las libretas de nuestras citas: fotos, stickers y recuerdos que se hojean en 3D.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

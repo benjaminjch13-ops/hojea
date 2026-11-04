@@ -9,7 +9,7 @@ const chips = (name, options, value) => `<div class="chips" role="group" data-fi
 const FORMAT_HINTS = {
   pdf: 'Un solo archivo con toda la libreta, listo para abrir en cualquier equipo o imprimir.',
   png: 'Una imagen por hoja. Varias imágenes llegan juntas en un .zip.',
-  html: 'Una página web hojeable, que funciona sola sin necesidad de Hojea.',
+  html: 'Una página web hojeable, que funciona sola sin necesidad de la app.',
 };
 
 function saveFile(file) {

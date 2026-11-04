@@ -2,7 +2,8 @@
 import { getMeta, setMeta } from './db.js';
 
 export const THEMES = [
-  { id: 'hojea', name: 'Hojea', bg1: '#4d50b8', bg2: '#7b7fdc', accent: '#ffd23f' },
+  { id: 'hojea', name: 'Índigo', bg1: '#4d50b8', bg2: '#7b7fdc', accent: '#ffd23f' },
+  { id: 'muu', name: 'Muu', bg1: '#573320', bg2: '#8f5527', accent: '#ffe3b0' },
   { id: 'delulu', name: 'Delulu', bg1: '#2F5852', bg2: '#386660', accent: '#EDB8B7' },
   { id: 'cafe', name: 'Noche de café', bg1: '#15100e', bg2: '#1d1714', accent: '#d39a6a' },
   { id: 'madera', name: 'Madera', bg1: '#221a16', bg2: '#2b221d', accent: '#d99ca2' },

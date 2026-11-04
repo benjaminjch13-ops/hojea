@@ -2,7 +2,7 @@
 import { Book3D } from './book3d.js';
 import { CHARM_PHOTOS } from './charm-photos.js';
 import {
-  CHARM_SHAPES, ELASTICS, FINISHES, LEATHERS, MATERIALS, MAX_CHARMS, PATTERN_NAMES, RIBBONS,
+  CHARM_SHAPES, COW_PRESETS, ELASTICS, FINISHES, LEATHERS, MATERIALS, MAX_CHARMS, PATTERN_NAMES, RIBBONS,
   TEXT_EFFECTS, TEXTURES, TITLE_FONTS, charmName, charmSVG, newCharm, surpriseCover,
 } from './cover.js';
 import * as db from './db.js';
@@ -28,7 +28,9 @@ function panelCuero(c) {
        ${range('Intensidad', 'photoOp', 20, 100, c.photoOp, 100)}
        <button type="button" class="btn ghost" data-act="remove-photo">Quitar imagen</button>`
     : '';
-  return field('Modelo', chips('model', [['delulu', 'Delulu con solapa'], ['clasica', 'Clásica con costura']], c.model))
+  const presets = `<div class="chips">${COW_PRESETS.map((p) => `<button type="button" class="chip cow-chip" data-preset="${p.id}">${esc(p.name)}</button>`).join('')}</div>`;
+  return field('Libretas de vaquita', presets)
+    + field('Modelo', chips('model', [['delulu', 'Delulu con solapa'], ['clasica', 'Clásica con costura']], c.model))
     + field('Color', swatches('color', LEATHERS, c.color))
     + field('Textura', chips('texture', TEXTURES, c.texture))
     + field('Acabado', chips('finish', FINISHES, c.finish))
@@ -90,7 +92,7 @@ function panelTexto(book) {
     + (c.initials.text ? field('Efecto de las iniciales', chips('initials.fx', TEXT_EFFECTS, c.initials.fx)) : '');
 }
 
-export async function renderCoverEditor(app, book) {
+export async function renderCoverEditor(app, book, { drop = false } = {}) {
   let tab = 'cuero';
   app.innerHTML = `
     <section class="view cover-edit">
@@ -124,6 +126,7 @@ export async function renderCoverEditor(app, book) {
     onChange: ({ leaf }) => { openBtn.textContent = leaf ? 'Ver cerrada' : 'Ver por dentro'; },
   });
   widget.setBook(book);
+  if (drop) widget.dropIn(220);
 
   let saveTimer;
   const saveNow = () => { clearTimeout(saveTimer); saveTimer = null; return db.saveBook(book); };
@@ -172,6 +175,12 @@ export async function renderCoverEditor(app, book) {
       if (action === 'up') [list[i - 1], list[i]] = [list[i], list[i - 1]];
       if (action === 'down') [list[i + 1], list[i]] = [list[i], list[i + 1]];
       if (action === 'material') list[i].material = charmBtn.dataset.v;
+      changed();
+      return;
+    }
+    const preset = t.closest('[data-preset]');
+    if (preset) {
+      book.cover = COW_PRESETS.find((p) => p.id === preset.dataset.preset).apply(book.cover);
       changed();
       return;
     }

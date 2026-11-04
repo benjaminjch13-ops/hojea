@@ -1,4 +1,4 @@
-# Hojea
+# Date's with Muu
 
 Digitaliza tus cuadernos de papel y hojéalos en 3D, dentro de una libreta de cuero hecha a tu gusto. Funciona en el navegador, se puede instalar como app y guarda tus fotos en tu dispositivo.
 
@@ -16,6 +16,9 @@ Luego abre <http://localhost:5173>.
 
 ## Qué hace
 
+- **Inicio:** saludo, días juntos, un recuerdo al azar de sus páginas e ideas para la próxima cita.
+- **Animaciones:** las hojas se doblan y proyectan sombra al pasarlas, y cada libreta nueva cae del cielo.
+- **Muu:** la vaquita peluda de la app. Reacciona al tocarla y es el ícono. Además hay pelaje y manchas de vaca para las libretas, charms, stickers, frases y un paquete de plantillas de vaquitas.
 - **Libretas a tu gusto:** modelo con solapa y remaches o con costura, color, textura, acabado, patrón e imagen de portada; elástico y cinta marcapáginas; hasta 6 charms, reales o dibujados; título e iniciales grabados, en oro, en plata o impresos. También tiene un botón "Sorpréndeme".
 - **Decorar por dentro:** cualquier página, sea una foto de tu cuaderno o una en blanco, lleva stickers, cintas, papeles, notas, texto, fotos con forma y marco, y dibujo libre. Incluye fondos de papel, plantillas y paquetes temáticos, quitar fondo, favoritos, guías de alineación y deshacer.
 - **Fondos:** 9 temas para la app.
@@ -52,6 +55,8 @@ npm test
 | Archivo | Contenido |
 | --- | --- |
 | `js/app.js` | Pantallas y navegación |
+| `js/home.js` | Tarjetas de la pantalla inicial |
+| `js/cow.js` | Dibujo de Muu y stickers de vaquitas |
 | `js/book3d.js` | Libro 3D: animación y gestos |
 | `js/capture.js` | Cámara y pantalla de recorte |
 | `js/imaging.js` | Perspectiva, detección de bordes y filtros |

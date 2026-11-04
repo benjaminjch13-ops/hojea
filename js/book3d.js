@@ -9,6 +9,9 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const REST_RX = 7;
 const IMAGE_WINDOW = 4;
 const DESIGN_WIDTH = 560;
+const BEND_STRIPS = 6;     // tiras en que se divide la hoja que se dobla
+const MAX_BENDING = 2;     // hojas dobladas a la vez: el resto gira plano para no pesar
+const SPRING = 42;         // firmeza del paso de hoja
 
 export class Book3D {
   // preview: modo del editor de portada. El arrastre solo gira la libreta y un toque la abre o cierra.
@@ -18,9 +21,15 @@ export class Book3D {
     this.preview = preview;
     this.root = document.createElement('div');
     this.root.className = 'b-book';
-    stage.append(this.root);
+    // Un contenedor aparte lleva la flotación en reposo, porque el libro mueve su propia transformación.
+    this.float = document.createElement('div');
+    this.float.className = 'b-float';
+    this.float.append(this.root);
+    stage.append(this.float);
 
-    this.pos = 0; this.target = 0;
+    this.pos = 0; this.target = 0; this.posV = 0;
+    this.peek = 0; this.peekT = 0;
+    this.bendDir = 1; this.bendSpeed = 0;
     this.fan = 0; this.fanMode = false;
     this.restRy = preview ? -26 : -10;
     this.rx = REST_RX; this.ry = this.restRy; this.rxT = REST_RX; this.ryT = this.restRy;
@@ -29,13 +38,23 @@ export class Book3D {
     this.drag = null;
     this.raf = 0;
     this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Entrada: la libreta llega girando un poco, no aparece de golpe.
+    if (!this.reduced) {
+      this.zoom = 0.86;
+      this.rx = REST_RX + 10;
+      this.ry = this.restRy - 24;
+    }
 
     this.handlers = {
       pointerdown: (e) => this.onDown(e),
       pointermove: (e) => this.onMove(e),
       pointerup: (e) => this.onUp(e),
       pointercancel: (e) => this.onUp(e),
-      pointerleave: () => { if (!this.drag && !preview) this.setOrbit(REST_RX, this.pos === 0 ? this.restRy : 0); },
+      pointerleave: () => {
+        this.peekT = 0;
+        if (!this.drag && !preview) this.setOrbit(REST_RX, this.pos === 0 ? this.restRy : 0);
+        else this.wake();
+      },
       wheel: (e) => { e.preventDefault(); this.zoomBy(e.deltaY < 0 ? 1.06 : 0.94); },
     };
     for (const [k, fn] of Object.entries(this.handlers)) {
@@ -57,7 +76,9 @@ export class Book3D {
     this.resizeObs.disconnect();
     removeEventListener('keydown', this.onKey);
     for (const [k, fn] of Object.entries(this.handlers)) this.stage.removeEventListener(k, fn);
-    this.root.remove();
+    clearTimeout(this.dropTimer);
+    this.ground?.remove();
+    this.float.remove();
   }
 
   // Lados en orden: portada, páginas, (lado en blanco si hace falta), contraportada.
@@ -75,7 +96,8 @@ export class Book3D {
       <div class="book-floor"></div>
       <div class="edge edge-r"></div><div class="edge edge-l"></div>
       <div class="edge-b edge-br"></div><div class="edge-b edge-bl"></div>
-      <div class="spine3d"></div><div class="book-ribbon"></div><div class="strap"></div>`;
+      <div class="spine3d"></div><div class="book-ribbon"></div><div class="page-cast"></div><div class="strap"></div>`;
+    this.cast = this.root.querySelector('.page-cast');
     this.floor = this.root.querySelector('.book-floor');
     this.edges = {
       r: this.root.querySelector('.edge-r'), l: this.root.querySelector('.edge-l'),
@@ -110,6 +132,8 @@ export class Book3D {
     leaf.imgs = leaf.el.querySelectorAll('img[data-id]');
     leaf.pages = leaf.el.querySelectorAll('.pg-fit');
     leaf.last = '';
+    leaf.bend = null;
+    leaf.el.classList.remove('bending');
   }
 
   // bound: la hoja va pegada a la tapa, así que se ve el cuero alrededor del papel.
@@ -177,7 +201,7 @@ export class Book3D {
   // ---- Navegación ----
   goTo(leaf, instant = false) {
     this.target = clamp(leaf, 0, this.n);
-    if (instant) this.pos = this.target;
+    if (instant) { this.pos = this.target; this.posV = 0; }
     this.wake();
   }
   next() { this.goTo(Math.round(this.target) + 1); }
@@ -189,6 +213,138 @@ export class Book3D {
   leafForPage(index) {
     const side = index + 1;
     return side % 2 ? (side + 1) / 2 : side / 2;
+  }
+
+  // La libreta nueva cae del cielo, rebota y levanta polvo al tocar el suelo.
+  dropIn(delay = 0) {
+    if (this.reduced) return;
+    const height = this.stage.getBoundingClientRect().height;
+    const start0 = -(height / 2 + (this.h || height) * 1.1);
+    this.dropState = {
+      y: start0, y0: start0,
+      v: 0, g: Math.max(1500, height * 3.4), tilt: 1, squash: 0, hits: 0, waiting: delay > 0,
+    };
+    this.zoom = this.zoomT;
+    this.rx = this.rxT; this.ry = this.ryT;
+    if (!this.ground) {
+      this.ground = document.createElement('div');
+      this.ground.className = 'drop-ground';
+      this.stage.append(this.ground);
+    }
+    this.ground.style.setProperty('--w', `${this.w * 1.25}px`);
+    this.ground.style.top = `calc(50% + ${this.h / 2 - 8}px)`;
+    this.ground.style.opacity = '0';
+    this.render(true);
+    const start = () => { if (this.dropState) { this.dropState.waiting = false; this.wake(); } };
+    if (delay > 0) this.dropTimer = setTimeout(start, delay); else this.wake();
+  }
+
+  stepDrop(dt) {
+    const d = this.dropState;
+    if (!d || d.waiting) return;
+    d.v += d.g * dt;
+    d.y += d.v * dt;
+    d.tilt = clamp(d.y / d.y0, 0, 1);
+    if (d.y >= 0) {
+      d.y = 0;
+      if (d.v > 170) {
+        if (!d.hits) this.impact();
+        d.squash = clamp(d.v / 1100, 0.15, 1);
+        d.hits++;
+        this.swingKick = (d.hits % 2 ? 1 : -1) * Math.min(26, d.v / 45);
+        d.v *= -0.3;
+      } else {
+        this.dropState = null;
+        this.ground.remove();
+        this.ground = null;
+        this.floor.style.opacity = '';
+        return;
+      }
+    }
+    d.squash *= Math.exp(-dt * 13);
+    if (this.ground) {
+      const near = 1 - clamp(-d.y / -d.y0, 0, 1);
+      this.ground.style.opacity = (near * near * 0.9).toFixed(3);
+      this.ground.style.setProperty('--s', (0.35 + near * 0.65).toFixed(3));
+    }
+  }
+
+  impact() {
+    this.stage.classList.remove('shake');
+    void this.stage.offsetWidth;
+    this.stage.classList.add('shake');
+    setTimeout(() => this.stage.classList.remove('shake'), 460);
+    const burst = document.createElement('div');
+    burst.className = 'dust-burst';
+    burst.style.top = `calc(50% + ${this.h / 2 - 6}px)`;
+    const pieces = [];
+    for (let i = 0; i < 16; i++) {
+      const side = i % 2 ? 1 : -1, far = this.w * (0.35 + Math.random() * 0.55);
+      pieces.push(`<i style="--dx:${(side * far).toFixed(0)}px;--dy:${(-14 - Math.random() * 46).toFixed(0)}px;--s:${(0.6 + Math.random() * 1.1).toFixed(2)};--d:${(Math.random() * 90).toFixed(0)}ms"></i>`);
+    }
+    for (let i = 0; i < 6; i++) {
+      const dx = (Math.random() - 0.5) * this.w * 1.5;
+      pieces.push(`<b style="--dx:${dx.toFixed(0)}px;--dy:${(-50 - Math.random() * 80).toFixed(0)}px;--d:${(40 + Math.random() * 120).toFixed(0)}ms">${i % 2 ? '♥' : '✦'}</b>`);
+    }
+    pieces.push('<em class="muu-pop">¡Muu!</em>');
+    burst.innerHTML = pieces.join('');
+    this.stage.append(burst);
+    setTimeout(() => burst.remove(), 1100);
+  }
+
+  // ---- Hoja que se dobla: durante el giro se reemplaza por tiras encadenadas ----
+  ensureBend(leaf) {
+    if (leaf.bend) return;
+    const faces = [['front', leaf.el.querySelector(':scope > .face.front')], ['back', leaf.el.querySelector(':scope > .face.back')]];
+    const strips = [];
+    let parent = leaf.el;
+    for (let k = 0; k < BEND_STRIPS; k++) {
+      const strip = document.createElement('div');
+      strip.className = k ? 'bend-strip' : 'bend-strip first';
+      const shades = [];
+      for (const [side, face] of faces) {
+        const clip = document.createElement('div');
+        clip.className = `bend-clip ${side}`;
+        const clone = face.cloneNode(true);
+        clone.classList.add('bend-face');
+        clone.querySelectorAll('.shade').forEach((s) => s.remove());
+        // Cada tira muestra su trozo de la cara: la de atrás está espejada respecto al lomo.
+        const offset = side === 'front' ? k : BEND_STRIPS - 1 - k;
+        clone.style.left = `calc(var(--w) * ${-offset} / ${BEND_STRIPS})`;
+        const shade = document.createElement('div');
+        shade.className = 'bend-shade';
+        // La sombra va sobre el papel, no sobre el margen transparente de la hoja.
+        clone.querySelector('.b-sheet').append(shade);
+        clip.append(clone);
+        strip.append(clip);
+        shades.push(shade);
+      }
+      parent.append(strip);
+      parent = strip;
+      strips.push({ el: strip, shades });
+    }
+    leaf.el.classList.add('bending');
+    leaf.bend = strips;
+  }
+
+  applyBend(leaf, p) {
+    const total = this.bendDir * Math.sin(p * Math.PI) * (16 + this.bendSpeed);
+    const parts = (BEND_STRIPS * (BEND_STRIPS - 1)) / 2;
+    let angle = -p * 180;
+    leaf.bend.forEach((strip, k) => {
+      const a = (total * k) / parts;
+      angle += a;
+      strip.el.style.transform = `rotateY(${a.toFixed(2)}deg)`;
+      // La luz depende de cuánto mira cada tira hacia afuera: así se lee la curva.
+      const light = (0.02 + Math.abs(Math.sin((angle * Math.PI) / 180)) * 0.25).toFixed(3);
+      strip.shades.forEach((s) => { s.style.opacity = light; });
+    });
+  }
+
+  dropBend(leaf) {
+    leaf.bend[0].el.remove();
+    leaf.bend = null;
+    leaf.el.classList.remove('bending');
   }
 
   setFan(on) {
@@ -207,6 +363,8 @@ export class Book3D {
       lastX: e.clientX, lastT: e.timeStamp, moved: false,
     };
     this.vel = 0;
+    this.posV = 0;
+    this.peekT = 0;
     this.stage.setPointerCapture(e.pointerId);
     this.stage.classList.add('dragging');
   }
@@ -220,6 +378,13 @@ export class Book3D {
         const nx = (e.clientX - r.left) / r.width - 0.5;
         const ny = (e.clientY - r.top) / r.height - 0.5;
         this.setOrbit(REST_RX - ny * 7, nx * 12 + (this.pos < 0.5 ? this.restRy : 0));
+        // La hoja se asoma cuando el mouse se acerca a su borde: invita a pasarla.
+        const shift = (-this.w / 2) * (1 - Math.min(this.pos, 1)) + (this.w / 2) * (1 - Math.min(this.n - this.pos, 1));
+        const x = e.clientX - (r.left + r.width / 2) - shift;
+        const zone = this.w * 0.2;
+        const atRight = this.target < this.n && Math.abs(x - this.w) < zone;
+        const atLeft = this.target > 0 && Math.abs(x + this.w) < zone;
+        this.peekT = atRight ? 0.05 : atLeft ? -0.05 : 0;
       }
       return;
     }
@@ -251,6 +416,7 @@ export class Book3D {
         // El impulso de un gesto rápido suma como máximo una hoja y media.
         const momentum = clamp(this.vel * 0.22, -1.5, 1.5);
         this.target = clamp(Math.round(this.pos + momentum), 0, this.n);
+        this.posV = clamp(this.vel, -5, 5); // la hoja sigue con la inercia del gesto
       } else if (this.pos < 0.5) this.next();
       else if (this.pos > this.n - 0.5) this.prev();
       else {
@@ -280,11 +446,25 @@ export class Book3D {
     this.lastFrame = now;
     const ease = (rate) => 1 - Math.exp(-dt * (this.reduced ? 40 : rate));
 
-    if (!this.drag || this.drag.mode !== 'flip') this.pos += (this.target - this.pos) * ease(7.5);
+    const prevPos = this.pos;
+    if (!this.drag || this.drag.mode !== 'flip') {
+      if (this.reduced) this.pos += (this.target - this.pos) * ease(7.5);
+      else {
+        // Resorte: la hoja arranca suave y aterriza sin frenazo.
+        this.posV += (SPRING * (this.target - this.pos) - 2 * Math.sqrt(SPRING) * this.posV) * dt;
+        this.pos = clamp(this.pos + this.posV * dt, 0, this.n);
+      }
+    }
+    const speed = dt ? (this.pos - prevPos) / dt : 0;
+    if (Math.abs(speed) > 0.04) this.bendDir = Math.sign(speed);
+    this.bendSpeed = lerp(this.bendSpeed, Math.min(28, Math.abs(speed) * 13), ease(9));
+    this.peek += (this.peekT - this.peek) * ease(11);
+    this.stepDrop(dt);
     const dragging = this.drag?.mode === 'flip' && this.drag.moved;
+    if (dragging) this.vel *= Math.exp(-dt * 7); // con el dedo quieto, el impulso se apaga
     const fanT = this.reduced ? 0
       : this.fanMode ? 1
-      : dragging ? clamp(Math.abs(this.vel) * 0.45, 0, 1)
+      : dragging ? clamp((Math.abs(this.vel) - 2.5) * 0.35, 0, 1)
       : Math.abs(this.target - this.pos) > 1.2 ? 0.6 : 0;
     this.fan += (fanT - this.fan) * ease(6);
     const prevRy = this.ry;
@@ -292,17 +472,24 @@ export class Book3D {
     this.ry += (this.ryT - this.ry) * ease(8);
     this.zoom += (this.zoomT - this.zoom) * ease(10);
     // El charm cuelga: se balancea cuando la libreta gira.
-    this.swing = lerp(this.swing ?? 0, clamp((this.ry - prevRy) * 2.4, -16, 16), ease(5));
+    this.swingKick = (this.swingKick ?? 0) * Math.exp(-dt * 3.2);
+    const wiggle = this.swingKick * Math.cos(now / 95);
+    this.swing = lerp(this.swing ?? 0, clamp((this.ry - prevRy) * 2.4 + wiggle, -30, 30), ease(this.swingKick ? 14 : 5));
 
-    const settled = !this.drag
+    const settled = !this.drag && !(this.dropState && !this.dropState.waiting)
       && Math.abs(this.target - this.pos) < 0.0015
+      && Math.abs(this.posV) < 0.01
+      && Math.abs(this.peekT - this.peek) < 0.001
+      && this.bendSpeed < 0.05
+      && Math.abs(this.swingKick) < 0.2
       && Math.abs(fanT - this.fan) < 0.002
       && Math.abs(this.rxT - this.rx) < 0.02
       && Math.abs(this.ryT - this.ry) < 0.02
       && Math.abs(this.zoomT - this.zoom) < 0.001
       && Math.abs(this.swing) < 0.05;
     if (settled) {
-      this.pos = this.target; this.fan = fanT; this.swing = 0;
+      this.pos = this.target; this.posV = 0; this.fan = fanT; this.swing = 0;
+      this.peek = this.peekT; this.bendSpeed = 0; this.swingKick = 0;
       this.rx = this.rxT; this.ry = this.ryT; this.zoom = this.zoomT;
     }
     this.render();
@@ -312,15 +499,33 @@ export class Book3D {
   render(force = false) {
     if (!this.leaves || !this.w) return;
     const { n, pos, thick: t, w } = this;
+    const shown = pos + this.peek; // la posición con la hoja asomada
     const span = this.fanMode ? Math.max(2, Math.min(n - 1, 9)) : 1.6;
     const width = 1 + this.fan * span;
     const shift = (-w / 2) * (1 - Math.min(pos, 1)) + (w / 2) * (1 - Math.min(n - pos, 1));
+    const d = this.dropState;
+    const fall = d ? `translate3d(0,${d.y.toFixed(1)}px,0) rotateZ(${(-16 * d.tilt).toFixed(2)}deg) ` : '';
+    const tumble = d ? 62 * d.tilt : 0;
+    const spin = d ? 38 * d.tilt : 0;
+    const squash = d ? ` scale(${(1 + d.squash * 0.05).toFixed(4)},${(1 - d.squash * 0.08).toFixed(4)})` : '';
     this.root.style.transform =
-      `scale(${this.zoom.toFixed(4)}) rotateX(${this.rx.toFixed(2)}deg) rotateY(${this.ry.toFixed(2)}deg) translateX(${shift.toFixed(2)}px)`;
+      `${fall}scale(${this.zoom.toFixed(4)})${squash} rotateX(${(this.rx + tumble).toFixed(2)}deg) rotateY(${(this.ry + spin).toFixed(2)}deg) translateX(${shift.toFixed(2)}px)`;
+    this.root.classList.toggle('falling', !!d);
 
+    const turning = !this.reduced && this.fan < 0.35
+      && (this.drag?.mode === 'flip' || Math.abs(this.target - pos) > 0.002 || Math.abs(this.posV) > 0.01);
+    let bending = 0, castP = null;
     for (let i = 0; i < n; i++) {
       const leaf = this.leaves[i];
-      const p = clamp((pos - i - 0.5) / width + 0.5, 0, 1);
+      const p = clamp((shown - i - 0.5) / width + 0.5, 0, 1);
+      if (castP === null && p > 0.002 && p < 0.998) castP = p;
+      // Las tapas son rígidas; solo el papel se dobla.
+      const paper = i > 0 && i < n - 1;
+      if (turning && paper && p > 0.006 && p < 0.994 && bending < MAX_BENDING) {
+        bending++;
+        this.ensureBend(leaf);
+        this.applyBend(leaf, p);
+      } else if (leaf.bend) this.dropBend(leaf);
       const z = lerp((n - i) * t, (i + 1) * t, p);
       const tf = `translateZ(${z.toFixed(2)}px) rotateY(${(-p * 180).toFixed(2)}deg)`;
       if (force || tf !== leaf.last) {
@@ -331,9 +536,21 @@ export class Book3D {
       }
     }
 
+    // La hoja en el aire proyecta sombra sobre la página de abajo.
+    const castOn = castP !== null && this.fan < 0.5;
+    this.cast.style.opacity = castOn ? (Math.sin(castP * Math.PI) * 0.75).toFixed(3) : '0';
+    if (castOn) {
+      const onRight = castP < 0.5;
+      const z = (onRight ? (n - pos) : pos) * t + 0.4;
+      const reach = Math.abs(Math.cos(castP * Math.PI));
+      this.cast.style.transform = `translateZ(${z.toFixed(2)}px) scaleX(${(onRight ? 1 : -1) * (0.25 + reach * 0.85)})`;
+    }
+
     // En abanico las hojas ya no forman un bloque, así que el canto desaparece.
     const solid = 1 - this.fan;
-    const zR = (n - pos) * t * solid, zL = pos * t * solid;
+    // Cada bloque de hojas solo tiene canto cuando su tapa ya está apoyada.
+    const zR = pos > n - 1 ? 0 : (n - pos) * t * solid;
+    const zL = pos < 1 ? 0 : pos * t * solid;
     const flat = (el, thickness, transform) => {
       el.style.setProperty('--t', `${Math.max(0, thickness).toFixed(2)}px`);
       el.style.transform = transform;
@@ -351,11 +568,13 @@ export class Book3D {
     this.strap.style.visibility = release >= 1 ? 'hidden' : 'visible';
     this.strap.style.transform = `translateZ(${closedZ.toFixed(2)}px) translateX(${(release * w * 0.22).toFixed(2)}px)`;
     this.strap.style.setProperty('--swing', `${(this.swing ?? 0).toFixed(2)}deg`);
+    this.strap.style.setProperty('--release', release.toFixed(3));
     this.root.style.setProperty('--strap-edge', (1 - release).toFixed(3));
 
     const left = -w * Math.min(pos, 1), right = w * Math.min(n - pos, 1);
     this.floor.style.left = `${left}px`;
     this.floor.style.width = `${Math.max(w, right - left)}px`;
+    if (d) this.floor.style.opacity = String(1 - d.tilt);
 
     const int = Math.round(pos);
     if (int !== this.lastInt) {
