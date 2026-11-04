@@ -21,8 +21,15 @@ const strand = (x, top, end, w, fill) =>
 const WHITE_EDGE = 'stroke="#fff" stroke-width="5" stroke-linejoin="round" paint-order="stroke"';
 
 // La cara de Muu: cuernos curvos, orejas caídas y flequillo sobre los ojos.
-export function fluffyHead(fur = BODY_FUR, { edge = false } = {}) {
-  const dark = shade(fur, -0.24), light = shade(fur, 0.2), lighter = shade(fur, 0.36);
+// `colors` reemplaza los tonos que se calculan a partir del pelaje.
+export function fluffyHead(fur = BODY_FUR, { edge = false, colors = {} } = {}) {
+  const c = {
+    dark: shade(fur, -0.24), light: shade(fur, 0.2), lighter: shade(fur, 0.36),
+    horn: '#f4e8cf', innerEar: '#eeb7a4', cheek: '#f09a86', cheekOpacity: 0.55,
+    muzzle: '#f4cdb9', muzzleTop: '#f9dccb', eye: '#2c1b14', feature: '#8c5a4b',
+    ...colors,
+  };
+  const { dark, light, lighter } = c;
   const line = edge ? WHITE_EDGE : '';
   const bangs = [
     [24, 30, 45, 6, dark], [76, 30, 45, 6, dark],
@@ -32,31 +39,40 @@ export function fluffyHead(fur = BODY_FUR, { edge = false } = {}) {
   ];
   return `
     <g class="cow-horns">
-      <path ${line} d="M28 31C16 31 6 22 7 7c6 10 14 14 25 15z" fill="#f4e8cf"/>
-      <path ${line} d="M72 31C84 31 94 22 93 7c-6 10-14 14-25 15z" fill="#f4e8cf"/>
+      <path ${line} d="M28 31C16 31 6 22 7 7c6 10 14 14 25 15z" fill="${c.horn}"/>
+      <path ${line} d="M72 31C84 31 94 22 93 7c-6 10-14 14-25 15z" fill="${c.horn}"/>
     </g>
-    <g class="cow-ear cow-ear-l"><path ${line} d="M26 42C14 37 5 41 1 50c9 8 19 7 27 0z" fill="${dark}"/><path d="M23 45c-6-2-11-1-15 4 6 3 11 3 16-1z" fill="#eeb7a4"/></g>
-    <g class="cow-ear cow-ear-r"><path ${line} d="M74 42C86 37 95 41 99 50c-9 8-19 7-27 0z" fill="${dark}"/><path d="M77 45c6-2 11-1 15 4-6 3-11 3-16-1z" fill="#eeb7a4"/></g>
+    <g class="cow-ear cow-ear-l"><path ${line} d="M26 42C14 37 5 41 1 50c9 8 19 7 27 0z" fill="${dark}"/><path d="M23 45c-6-2-11-1-15 4 6 3 11 3 16-1z" fill="${c.innerEar}"/></g>
+    <g class="cow-ear cow-ear-r"><path ${line} d="M74 42C86 37 95 41 99 50c-9 8-19 7-27 0z" fill="${dark}"/><path d="M77 45c6-2 11-1 15 4-6 3-11 3-16-1z" fill="${c.innerEar}"/></g>
     <path ${line} d="${shaggy(50, 51, 28, 32)}" fill="${fur}"/>
-    <ellipse cx="33" cy="64" rx="5" ry="3.4" fill="#f09a86" opacity=".55"/>
-    <ellipse cx="67" cy="64" rx="5" ry="3.4" fill="#f09a86" opacity=".55"/>
+    <ellipse cx="33" cy="64" rx="5" ry="3.4" fill="${c.cheek}" opacity="${c.cheekOpacity}"/>
+    <ellipse cx="67" cy="64" rx="5" ry="3.4" fill="${c.cheek}" opacity="${c.cheekOpacity}"/>
     <g class="cow-eyes">
-      <g class="cow-eye"><circle cx="37" cy="56" r="3.8" fill="#2c1b14"/><circle cx="38.3" cy="54.7" r="1.2" fill="#fff"/></g>
-      <g class="cow-eye"><circle cx="63" cy="56" r="3.8" fill="#2c1b14"/><circle cx="64.3" cy="54.7" r="1.2" fill="#fff"/></g>
+      <g class="cow-eye"><circle cx="37" cy="56" r="3.8" fill="${c.eye}"/><circle cx="38.3" cy="54.7" r="1.2" fill="#fff"/></g>
+      <g class="cow-eye"><circle cx="63" cy="56" r="3.8" fill="${c.eye}"/><circle cx="64.3" cy="54.7" r="1.2" fill="#fff"/></g>
     </g>
-    <ellipse cx="50" cy="74" rx="19" ry="13.5" fill="#f4cdb9"/>
-    <ellipse cx="50" cy="70" rx="15" ry="7" fill="#f9dccb" opacity=".8"/>
-    <ellipse cx="43" cy="72" rx="2.4" ry="3" fill="#8c5a4b"/>
-    <ellipse cx="57" cy="72" rx="2.4" ry="3" fill="#8c5a4b"/>
-    <path d="M43 80q7 5 14 0" fill="none" stroke="#8c5a4b" stroke-width="2" stroke-linecap="round"/>
+    <ellipse cx="50" cy="74" rx="19" ry="13.5" fill="${c.muzzle}"/>
+    <ellipse cx="50" cy="70" rx="15" ry="7" fill="${c.muzzleTop}" opacity=".8"/>
+    <ellipse cx="43" cy="72" rx="2.4" ry="3" fill="${c.feature}"/>
+    <ellipse cx="57" cy="72" rx="2.4" ry="3" fill="${c.feature}"/>
+    <path d="M43 80q7 5 14 0" fill="none" stroke="${c.feature}" stroke-width="2" stroke-linecap="round"/>
     <path d="${shaggy(50, 21, 19, 8, 9, 0.24)}" fill="${light}"/>
     ${bangs.map(([x, top, end, w, fill]) => strand(x, top, end, w, fill)).join('')}`;
 }
 
+// Muu con los colores de la paleta de la app.
+export const MUU_PINK = '#EFA8B7';
+export const MUU_COLORS = {
+  dark: '#F6CAD2', light: '#F6CAD2', lighter: '#FFF8EF',
+  horn: '#F6E3A5', innerEar: '#FFF8EF', cheek: '#DCD2EE', cheekOpacity: 1,
+  muzzle: '#FFF8EF', muzzleTop: '#FFFFFF', eye: '#54433D', feature: '#79645D',
+};
+export const muuHead = (options = {}) => fluffyHead(MUU_PINK, { colors: MUU_COLORS, ...options });
+
 export const muuMascotHTML = () => `
   <button type="button" class="muu" data-muu aria-label="Saluda a Muu">
     <span class="muu-say" aria-live="polite"></span>
-    <svg class="muu-cow" viewBox="-2 0 104 92" aria-hidden="true">${fluffyHead()}</svg>
+    <svg class="muu-cow" viewBox="-2 0 104 92" aria-hidden="true">${muuHead()}</svg>
   </button>`;
 
 export const MUU_PHRASES = ['¡Muu!', 'Te amuuu', '¡Muuy buena cita!', 'Muuchos besos', '¿Y mi galleta?', 'Muuuu ♥', 'Peinen mi flequillo', '¡Otra libreta!'];
@@ -71,6 +87,7 @@ export function cowStickers(W) {
   };
   return [
     { id: 'cow-peluda', n: 'Muu, vaquita peluda', c: 'vaquitas kawaii', col: BODY_FUR, s: (c) => fluffyHead(c, { edge: true }) },
+    { id: 'cow-muu-rosa', n: 'Muu rosa', c: 'vaquitas kawaii', col: MUU_PINK, s: (c) => fluffyHead(c, { edge: true, colors: MUU_COLORS }) },
     { id: 'cow-rubia', n: 'Vaquita rubia', c: 'vaquitas kawaii', col: '#dcb074', s: (c) => fluffyHead(c, { edge: true }) },
     { id: 'cow-negra', n: 'Vaquita negra', c: 'vaquitas kawaii', col: '#4d3a33', s: (c) => fluffyHead(c, { edge: true }) },
     { id: 'cow-entera', n: 'Muu de cuerpo entero', c: 'vaquitas kawaii', col: BODY_FUR, s: (c) => {

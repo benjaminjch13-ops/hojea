@@ -116,22 +116,22 @@ export async function cropPhoto(file, index, total) {
     ui.rect(0, 0, uiC.width / dpr, uiC.height / dpr);
     pts.forEach(([x, y], i) => (i ? ui.lineTo(x, y) : ui.moveTo(x, y)));
     ui.closePath();
-    ui.fillStyle = 'rgba(14,14,40,.58)';
+    ui.fillStyle = 'rgba(84,67,61,.55)';
     ui.fill('evenodd');
 
     ui.beginPath();
     pts.forEach(([x, y], i) => (i ? ui.lineTo(x, y) : ui.moveTo(x, y)));
     ui.closePath();
-    ui.strokeStyle = '#ffd23f';
+    ui.strokeStyle = '#EFA8B7';
     ui.lineWidth = 2;
     ui.stroke();
 
     pts.forEach(([x, y], i) => {
       ui.beginPath();
       ui.arc(x, y, i === active ? 13 : 11, 0, Math.PI * 2);
-      ui.fillStyle = i === active ? '#ffd23f' : 'rgba(255,255,255,.95)';
+      ui.fillStyle = i === active ? '#EFA8B7' : 'rgba(255,255,255,.95)';
       ui.fill();
-      ui.strokeStyle = '#2a2b78';
+      ui.strokeStyle = '#54433D';
       ui.lineWidth = 2;
       ui.stroke();
     });
@@ -148,7 +148,7 @@ export async function cropPhoto(file, index, total) {
       ui.clip();
       const [sx, sy] = corners[active];
       const span = (r * 2) / (view.s * zoom);
-      ui.fillStyle = '#16163a';
+      ui.fillStyle = '#79645D';
       ui.fillRect(lx - r, ly - r, r * 2, r * 2);
       ui.drawImage(source, sx - span / 2, sy - span / 2, span, span, lx - r, ly - r, r * 2, r * 2);
       ui.restore();
@@ -156,7 +156,7 @@ export async function cropPhoto(file, index, total) {
       ui.arc(lx, ly, r, 0, Math.PI * 2);
       ui.moveTo(lx - 10, ly); ui.lineTo(lx + 10, ly);
       ui.moveTo(lx, ly - 10); ui.lineTo(lx, ly + 10);
-      ui.strokeStyle = '#ffd23f';
+      ui.strokeStyle = '#EFA8B7';
       ui.lineWidth = 2;
       ui.stroke();
     }

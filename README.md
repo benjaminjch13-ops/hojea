@@ -28,6 +28,10 @@ Luego abre <http://localhost:5173>.
 - **Administrar:** reordena, amplía y elimina páginas.
 - **Exportar:** PDF, imágenes PNG o una página web hojeable, como libro abierto o una página por hoja, con o sin el diseño de la libreta, con rango de páginas y calidad para imprimir.
 
+## Paleta
+
+Los colores de la interfaz están en las variables de `:root`, al inicio de `css/styles.css`: Milk Cream, Strawberry Milk, Muu Pink, Butter Yellow, Matcha Milk, Lavender, Cocoa y Soft White. Para el texto se usan dos tonos más oscuros de Cocoa, porque el original no alcanza a leerse en letra chica sobre los pasteles. La paleta no afecta a las libretas: el cuero, los charms, los stickers y el papel tienen sus propios colores.
+
 ## Publicación
 
 La app está en <https://dates-with-muu.vercel.app>. Cada push a `main` la publica en Vercel; `vercel.json` y `.vercelignore` definen qué se sube.
