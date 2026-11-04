@@ -19,6 +19,7 @@ export function applyTheme(id) {
   st.setProperty('--bg-1', t.bg1);
   st.setProperty('--bg-2', t.bg2);
   st.setProperty('--accent', t.accent);
+  st.setProperty('--app-accent', t.accent);
   document.querySelector('meta[name=theme-color]')?.setAttribute('content', t.bg1);
   return t.id;
 }

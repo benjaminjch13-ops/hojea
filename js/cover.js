@@ -175,6 +175,9 @@ function textEffect(fx, color, leather) {
   return `color:${shade(leather, -0.5)};text-shadow:0 1px 0 rgba(255,255,255,.26),0 -1px 1px rgba(0,0,0,.5);`;
 }
 
+// Color del relieve cuando el cuero es muy oscuro; null si sirve el grabado normal.
+export const engraveColor = (leather) => (luminance(leather) < 0.09 ? shade(leather, 0.42) : null);
+
 function luminance(hex) {
   const n = parseInt(hex.replace('#', ''), 16);
   const f = (v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };

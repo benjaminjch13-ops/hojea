@@ -23,7 +23,7 @@ Luego abre <http://localhost:5173>.
 - **Recorte:** detecta los bordes de la hoja, deja ajustar las esquinas con lupa y endereza la perspectiva. Filtros: Original, Realce y Blanco y negro.
 - **Libro 3D:** arrastra una página, haz clic en un lado, usa las flechas del teclado o la barra. Al abrirla, el elástico se suelta y el cuero asoma alrededor de las hojas. Arrastra el fondo para girar el libro. También tiene vista en abanico y zoom.
 - **Administrar:** reordena, amplía y elimina páginas.
-- **Exportar:** genera un PDF con todas las páginas.
+- **Exportar:** PDF, imágenes PNG o una página web hojeable, como libro abierto o una página por hoja, con o sin el diseño de la libreta, con rango de páginas y calidad para imprimir.
 
 ## Usarla en tu celular
 
@@ -55,7 +55,7 @@ npm test
 | `js/book3d.js` | Libro 3D: animación y gestos |
 | `js/capture.js` | Cámara y pantalla de recorte |
 | `js/imaging.js` | Perspectiva, detección de bordes y filtros |
-| `js/pdf.js` | Exportación a PDF |
+| `js/export-dialog.js`, `js/pdf.js` | Opciones de exportación y escritor de PDF |
 | `js/db.js` | Almacenamiento local |
 | `js/cover.js` | Libreta de cuero: materiales y dibujo |
 | `js/cover-editor.js` | Editor de la portada |

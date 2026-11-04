@@ -105,6 +105,7 @@ export async function renderCoverEditor(app, book) {
           <div class="edit-stage-tools">
             <button type="button" class="btn ghost-light" data-act="surprise">Sorpréndeme</button>
             <button type="button" class="btn ghost-light" data-act="toggle-open">Ver por dentro</button>
+            <a class="btn ghost-light" href="#/libro/${book.id}/paginas/0">Decorar páginas</a>
           </div>
           <p class="edit-hint">Arrastra para ver el lomo y la contratapa</p>
         </div>

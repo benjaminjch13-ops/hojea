@@ -1,6 +1,7 @@
 // Editor de páginas de Delulu Journal V2 (repositorio delulusV2), adaptado a Hojea.
 // Lo de abajo de "Código de Delulu" es el original; este encabezado lo conecta con el almacenamiento de Hojea.
 import { confirmDialog, toast as showToast } from './ui.js';
+import { charmSVG, engraveColor } from './cover.js';
 import { deleteMeta, getMeta, getMetaByPrefix, getPageUrl, saveBook, setMeta } from './db.js';
 
 let S = null;
@@ -33,7 +34,7 @@ const dims = (a) => [560, Math.round(560 / ((a.aspect || 0.72) * SHEET_RATIO))];
 
 // Fotos escaneadas del cuaderno: la página las muestra como base y encima van los elementos.
 const SCANS = new Map();
-const scanHTML = (p) => (p.scan && SCANS.get(p.scan) ? `<img class="pg-scan" src="${SCANS.get(p.scan)}" alt="" draggable="false">` : '');
+const scanHTML = (p) => (p.scan && SCANS.get(p.scan) ? `<img class="pg-scan" decoding="async" src="${SCANS.get(p.scan)}" alt="" draggable="false">` : '');
 async function drawScan(ctx, p, W, H) {
   if (!p.scan) return;
   const img = await loadImg(SCANS.get(p.scan));
@@ -543,7 +544,7 @@ async function readImage(file,max=1100){if(!/^image\/(png|jpe?g|webp|gif|heic|he
 /* ================= agenda view / page editor ================= */
 const V={cur:0,double:true,zoom:1,thumbs:false,libTab:'stickers',cat:'todos',q:''};
 function openAgenda(a,pageIdx=0){ED.a=a;ED.mode='page';ED.sel=null;ED.draw=null;$('#btnDraw').classList.remove('on');V.cur=pageIdx;V.zoom=1;V.double=innerWidth>900&&!(a.orient==='land'&&innerWidth<1300);
-  initHistory();ED.rerender=renderStage;$('#openTitle').textContent=a.title;go('open');renderLib();renderStage(true);renderCtx();
+  initHistory();ED.rerender=renderStage;$('#openTitle').textContent=a.title;go('open');$('#lib').innerHTML='';setTimeout(renderLib,60);renderStage(true);renderCtx();
   if(a.pages.length>1)setTimeout(()=>tipOnce('turn',touch()?'Desliza el dedo de lado para pasar la página':'Arrastra la esquina de la página para pasarla'),1800)}
 function spreadIdx(){if(!V.double)return[V.cur];const l=V.cur-(V.cur%2);return[l,l+1]}
 function renderStage(opening){const a=ED.a,[W,H]=dims(a),st=$('#stage');const idx=spreadIdx();const pad=14;
@@ -633,8 +634,11 @@ function makeFromKey(k){const[ty,a,b]=k.split(':');
   if(ty==='text'){const m={title:['Título','"Young Serif", serif',34,320,56],sub:['Subtítulo','"Amatic SC", cursive',38,280,56],para:['Escribe lo que quieras recordar de hoy…','Caveat, cursive',24,300,110],hand:['Una nota a mano','"Homemade Apple", cursive',18,280,70],type:['Querida yo del futuro:','"Special Elite", monospace',18,300,60],check:['[ ] Primera cosa\n[ ] Segunda cosa\n[ ] Tercera cosa','Caveat, cursive',24,260,120],label:['ETIQUETA','Figtree, sans-serif',14,140,36]}[a];
     return{type:'text',text:m[0],font:m[1],fs:m[2],w:m[3],h:m[4],color:'#3b2d26',b:a==='label',bg:a==='label'?'cinta':'',bgc:'#f3dfe1',al:a==='label'?'center':'left'}}
   return null}
-function renderLib(){const tabs=[['plantillas','Plantillas'],['stickers','Stickers'],['cintas','Cintas'],['papeles','Papeles'],['texto','Texto'],['fotos','Fotos'],['fondo','Fondo'],['favs','★']];
-  $('#lib').innerHTML=`<div class="tabs">${tabs.map(([v,l])=>`<button class="tab${V.libTab===v?' on':''}" data-tab="${v}">${l}</button>`).join('')}<div class="spacer"></div><button class="btn ghost icon mobile-only" data-closelib aria-label="Cerrar">${ico('x')}</button></div><div class="body">${libItems()}</div>`}
+let libShownTab=null;
+function renderLib(){const keep=['.tabs','.chips'].map(s=>[s,$(`#lib ${s}`)?.scrollLeft||0]),top=$('#lib .body')?.scrollTop||0,sameTab=libShownTab===V.libTab;libShownTab=V.libTab;const tabs=[['plantillas','Plantillas'],['stickers','Stickers'],['cintas','Cintas'],['papeles','Papeles'],['texto','Texto'],['fotos','Fotos'],['fondo','Fondo'],['favs','★']];
+  $('#lib').innerHTML=`<div class="tabs">${tabs.map(([v,l])=>`<button class="tab${V.libTab===v?' on':''}" data-tab="${v}">${l}</button>`).join('')}<div class="spacer"></div><button class="btn ghost icon mobile-only" data-closelib aria-label="Cerrar">${ico('x')}</button></div><div class="body">${libItems()}</div>`;
+  keep.forEach(([s,x])=>{const el=$(`#lib ${s}`);if(el&&(s==='.tabs'||sameTab))el.scrollLeft=x});if(sameTab)$('#lib .body').scrollTop=top;
+  $('#lib .tab.on')?.scrollIntoView({block:'nearest',inline:'nearest'})}
 const lib=$('#lib');
 lib.addEventListener('click',async ev=>{const t=ev.target;
   if(t.closest('[data-closelib]'))return lib.classList.remove('openp');
@@ -1007,6 +1011,92 @@ function packItems(){const a=ED.a,[W,H]=dims(a),pk={st:curPack==='basicas'?['sta
 }
 
 
+
+/* ==================== Exportación de Delulu ==================== */
+const isTornasol = (c) => (c.color || '').toLowerCase() === TORNASOL || c.finish === 'tornasol';
+function coverPattern(ctx,p,W,H){const line=(x1,y1,x2,y2)=>{ctx.moveTo(x1,y1);ctx.lineTo(x2,y2)};ctx.save();
+  if(p==='rombos'){ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;ctx.beginPath();for(let k=-H;k<W+H;k+=23*Math.SQRT2){line(k,0,k+H,H);line(k+H,0,k,H)}ctx.stroke()}
+  if(p==='puntos'){ctx.fillStyle='rgba(255,255,255,.13)';for(let x=8;x<W;x+=16)for(let y=8;y<H;y+=16){ctx.beginPath();ctx.arc(x,y,1.5,0,7);ctx.fill()}}
+  if(p==='rayas'){ctx.fillStyle='rgba(0,0,0,.08)';for(let x=18;x<W;x+=22)ctx.fillRect(x,0,4,H)}
+  if(p==='floral'){for(let x=20;x<W+40;x+=40)for(let y=20;y<H+40;y+=40){ctx.fillStyle='rgba(255,255,255,.12)';ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.08)';ctx.beginPath();ctx.arc(x+20,y+20,8,0,7);ctx.fill()}}
+  if(p==='cuadros'){ctx.fillStyle='rgba(0,0,0,.09)';for(let x=0;x<W;x+=34)ctx.fillRect(x,0,2,H);for(let y=0;y<H;y+=34)ctx.fillRect(0,y,W,2)}
+  ctx.restore()}
+function drawBand(ctx,a,W,H,back){const e=a.cover.elastic,t=e.width||9,c=e.color,vert=e.orient!=='horizontal',pos=e.pos??(vert?.84:.6);
+  let x,y,w,h;if(vert){x=(back?W*(1-pos):W*pos)-t/2;y=-8;w=t;h=H+20}else{x=back?-14:-8;y=H*pos-t/2;w=W+22;h=t}
+  const g=vert?ctx.createLinearGradient(x,0,x+t,0):ctx.createLinearGradient(0,y,0,y+t);
+  const st=e.style==='plano'?[[0,shade(c,-.25)],[.2,c],[.8,c],[1,shade(c,-.25)]]:[[0,shade(c,-.45)],[.45,shade(c,.25)],[.6,c],[1,shade(c,-.45)]];st.forEach(([p,col])=>g.addColorStop(p,col));
+  ctx.save();shadow(ctx,4,3,.35);rr(ctx,x,y,w,h,t/2);ctx.fillStyle=e.style==='trenzado'?shade(c,.15):g;ctx.fill();noShadow(ctx);
+  if(e.style==='trenzado'){ctx.clip();ctx.strokeStyle=shade(c,-.25);ctx.lineWidth=3;ctx.beginPath();for(let k=vert?y-t:x-t;k<(vert?y+h:x+w)+t;k+=6){vert?(ctx.moveTo(x,k),ctx.lineTo(x+t,k+t*.7)):(ctx.moveTo(k,y+t),ctx.lineTo(k+t*.7,y))}ctx.stroke()}
+  if(e.style==='plano'){ctx.strokeStyle='rgba(255,255,255,.4)';ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();vert?(ctx.moveTo(x+t/2,y),ctx.lineTo(x+t/2,y+h)):(ctx.moveTo(x,y+t/2),ctx.lineTo(x+w,y+t/2));ctx.stroke()}
+  ctx.restore()}
+async function drawCharms(ctx,a,W,H){const e=a.cover.elastic,list=a.cover.charms||[],offs=[0,-22,22,-42,42,-62],vert=e.orient!=='horizontal';
+  for(let i=0;i<list.length;i++){const c=list[i],s=46*(c.size||1);const cx=vert?W*(e.pos??.84)+offs[i%6]*.6:W*.5+offs[i%6];const cy=vert?H*.42+i*8:H*(e.pos??.6)-4;
+    const img=await loadImg(svgURL(charmSVG(c).replace("<svg ",`<svg width="${Math.ceil(s*ctx.__s)}" height="${Math.ceil(s*ctx.__s*1.5)}" `)));if(!img)continue;
+    ctx.save();ctx.translate(cx,cy-s*.12);ctx.rotate((i%2?4:-5)*Math.PI/180);ctx.drawImage(img,-s/2,0,s,s*1.5);ctx.restore()}}
+async function renderCover(ctx,a,W,H,back){const c=a.cover;ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();
+  ctx.fillStyle=c.color;ctx.fillRect(0,0,W,H);
+  if(!back&&c.photoURL){const img=await loadImg(c.photoURL);if(img){ctx.save();ctx.globalAlpha=c.photoOp??.85;ctx.globalCompositeOperation=c.photoBlend||'multiply';const k=Math.max(W/img.naturalWidth,H/img.naturalHeight);ctx.drawImage(img,(W-img.naturalWidth*k)/2,(H-img.naturalHeight*k)/2,img.naturalWidth*k,img.naturalHeight*k);ctx.restore()}}
+  await texFill(ctx,c.texture||'liso','overlay',c.texture==='liso'?.5:.85,W,H);coverPattern(ctx,c.pattern,W,H);
+  ctx.save();if(back){ctx.translate(W,0);ctx.scale(-1,1)}
+  const sp=ctx.createLinearGradient(0,0,W*.07,0);sp.addColorStop(0,'rgba(0,0,0,.35)');sp.addColorStop(.6,'rgba(255,255,255,.06)');sp.addColorStop(1,'rgba(0,0,0,.15)');ctx.fillStyle=sp;ctx.fillRect(0,0,W*.07,H);
+  const sh=ctx.createLinearGradient(0,0,16,0);sh.addColorStop(0,'rgba(0,0,0,.3)');sh.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=sh;ctx.fillRect(0,0,16,H);
+  if(c.model==='delulu'){ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillRect(W*.86,0,W*.14,H);
+    ctx.save();ctx.shadowColor='rgba(0,0,0,.42)';ctx.shadowBlur=9*ctx.__s;ctx.shadowOffsetX=3*ctx.__s;rr(ctx,-20,-4,W*.86+20,H+8,[0,W*.06,W*.06,0]);ctx.fillStyle=c.color;ctx.fill();ctx.restore();
+    ctx.save();rr(ctx,-20,-4,W*.86+20,H+8,[0,W*.06,W*.06,0]);ctx.clip();await texFill(ctx,c.texture||'liso','overlay',c.texture==='liso'?.5:.85,W,H);ctx.restore();
+    for(const y of[H*.045,H*.955]){const r=W*.011,g=ctx.createRadialGradient(W*.027-r*.3,y-r*.3,0,W*.027,y,r);g.addColorStop(0,'#9aa0a6');g.addColorStop(1,'#2c2f33');ctx.fillStyle=g;ctx.beginPath();ctx.arc(W*.027,y,r,0,7);ctx.fill()}}
+  else{ctx.strokeStyle='rgba(255,240,220,.45)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);rr(ctx,7,7,W-14,H-14,[6,10,10,6]);ctx.stroke();ctx.setLineDash([])}ctx.restore();
+  if(isTornasol(c)){ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.6;let g;
+    if(ctx.createConicGradient){g=ctx.createConicGradient(3.5,W*.3,H*.3);[['#ffd6ec',0],['#d6ecff',.25],['#dcffe6',.5],['#fff4c6',.75],['#ffd6ec',1]].forEach(([col,p])=>g.addColorStop(p,col))}else{g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#ffd6ec');g.addColorStop(.5,'#d6ecff');g.addColorStop(1,'#fff4c6')}
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.restore()}
+  if(!back)for(const e of c.elements||[])await drawEl(ctx,e,c.color);
+  ctx.fillStyle=grad115(ctx,W,H,c.finish==='brillo'?[[0,'rgba(255,255,255,.28)'],[.35,'rgba(255,255,255,0)'],[.6,'rgba(255,255,255,0)'],[.75,'rgba(255,255,255,.12)'],[.9,'rgba(255,255,255,0)']]:[[0,'rgba(255,255,255,.08)'],[.4,'rgba(255,255,255,0)']]);ctx.fillRect(0,0,W,H);
+  drawBand(ctx,a,W,H,back);if(!back)await drawCharms(ctx,a,W,H);ctx.restore()}
+
+async function renderJob(a,job,sc){const[W,H]=dims(a);
+  if(job.k==='cover'||job.k==='back')return canvasOf(W,H,sc,ctx=>renderCover(ctx,a,W,H,job.k==='back'));
+  if(job.k==='page')return canvasOf(W,H,sc,ctx=>renderPage(ctx,a.pages[job.i],W,H,job.i+1,'r'));
+  const SW=W*2+28,SH=H+28;
+  return canvasOf(SW,SH,sc,async ctx=>{ctx.fillStyle='#efe6d8';ctx.fillRect(0,0,SW,SH);ctx.save();rr(ctx,0,0,SW,SH,[14,20,20,14]);ctx.fillStyle=a.cover.color;ctx.fill();ctx.clip();await texFill(ctx,a.cover.texture||'liso','overlay',.6,SW,SH);ctx.restore();
+    for(const[k,i]of[[0,job.l],[1,job.r]]){ctx.save();ctx.translate(14+k*W,14);
+      if(i==null||!a.pages[i]){ctx.fillStyle='#fbf7f0';ctx.fillRect(0,0,W,H)}else await renderPage(ctx,a.pages[i],W,H,i+1,k?'r':'l');
+      const g=k?ctx.createLinearGradient(0,0,22,0):ctx.createLinearGradient(W,0,W-22,0);g.addColorStop(0,'rgba(0,0,0,.22)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(k?0:W-22,0,22,H);ctx.restore()}
+    const rg=ctx.createLinearGradient(SW/2-13,0,SW/2+13,0);rg.addColorStop(0,'rgba(0,0,0,.3)');rg.addColorStop(.5,'rgba(0,0,0,.05)');rg.addColorStop(1,'rgba(0,0,0,.3)');ctx.fillStyle=rg;ctx.fillRect(SW/2-13,0,26,SH)})}
+function jobsFor(a,o){const n=a.pages.length,from=clamp((o.from||1)-1,0,n-1),to=clamp((o.to||n)-1,from,n-1),J=[];
+  if(o.cover)J.push({k:'cover'});
+  if(o.layout==='spread'){let s=from-(from%2);for(let i=s;i<=to;i+=2)J.push({k:'spread',l:i>=from?i:null,r:i+1<=to?i+1:null})}
+  else for(let i=from;i<=to;i++)J.push({k:'page',i});
+  if(o.cover)J.push({k:'back'});return J}
+
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function buildZip(files){const enc=new TextEncoder(),parts=[],central=[];let off=0;
+  for(const f of files){const nm=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);h.setUint32(14,crc,true);h.setUint32(18,sz,true);h.setUint32(22,sz,true);h.setUint16(26,nm.length,true);
+    parts.push(new Uint8Array(h.buffer),nm,f.data);
+    const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);c.setUint32(16,crc,true);c.setUint32(20,sz,true);c.setUint32(24,sz,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+    central.push(new Uint8Array(c.buffer),nm);off+=30+nm.length+sz}
+  const cd=central.reduce((s,b)=>s+b.length,0),e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cd,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:'application/zip'})}
+const slug=s=>(s||'agenda').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'agenda';
+
+/* ---- handing the file to the viewer ---- */
+
+function flipbookHTML(title,pages){const T=esc(title);
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${T}</title>
+<style>:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;flex-direction:column;align-items:center;background:#d8c3a5;background-image:repeating-linear-gradient(92deg,transparent 0 38px,rgba(110,78,50,.1) 38px 40px,transparent 40px 90px);font-family:Georgia,"Times New Roman",serif;color:#3b2d26}
+header{padding:22px 16px 6px;text-align:center}h1{font-weight:400;margin:0;font-size:clamp(24px,5vw,34px)}header p{margin:6px 0 0;font:14px system-ui,sans-serif;color:#6e5a4d}
+.stage{flex:1;width:100%;display:flex;align-items:center;justify-content:center;padding:12px 16px;touch-action:pan-y}
+.stage img{display:block;max-width:100%;max-height:calc(100vh - 180px);border-radius:10px;box-shadow:0 26px 50px -22px rgba(50,28,14,.7);transition:opacity .22s ease,transform .3s ease}
+.stage img.out{opacity:0;transform:translateX(var(--dx,0))}nav{display:flex;align-items:center;gap:16px;padding:6px 16px 26px;font:14px system-ui,sans-serif}
+button{width:46px;height:46px;border-radius:50%;border:0;background:#fffaf3;color:#3b2d26;font-size:22px;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.18)}button:disabled{opacity:.35;cursor:default}button:focus-visible{outline:2px solid #c4878c;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.stage img{transition:none}}</style></head>
+<body><header><h1>${T}</h1><p>Agenda hecha en Delulu Journal · usa las flechas o desliza</p></header><main class="stage"><img id="pg" alt=""></main>
+<nav><button id="pv" aria-label="Anterior">‹</button><span id="ct" aria-live="polite"></span><button id="nx" aria-label="Siguiente">›</button></nav>
+<script>const P=${JSON.stringify(pages.map(p=>p.src))},L=${JSON.stringify(pages.map(p=>p.label))};let i=0;const im=document.getElementById('pg'),ct=document.getElementById('ct'),pv=document.getElementById('pv'),nx=document.getElementById('nx');
+function show(n,d){if(n<0||n>=P.length)return;i=n;im.style.setProperty('--dx',(d||0)*-30+'px');im.classList.add('out');setTimeout(()=>{im.src=P[i];im.alt=L[i];im.classList.remove('out')},d?180:0);ct.textContent=L[i]+'  ·  '+(i+1)+'/'+P.length;pv.disabled=i===0;nx.disabled=i===P.length-1}
+pv.onclick=()=>show(i-1,-1);nx.onclick=()=>show(i+1,1);addEventListener('keydown',e=>{if(e.key==='ArrowRight')show(i+1,1);if(e.key==='ArrowLeft')show(i-1,-1)});
+let x0=null;im.parentElement.addEventListener('pointerdown',e=>x0=e.clientX);addEventListener('pointerup',e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>50)show(i+(dx<0?1:-1),dx<0?1:-1)});show(0);<\/script></body></html>`}
+
 /* ==================== Conexión con Hojea ==================== */
 document.addEventListener('click', (e) => {
   const d = e.target.closest?.('#open [data-click]');
@@ -1029,7 +1119,6 @@ export function openEditor(book, index, { tab, onBack, onCover } = {}) {
   HOOKS.cover = onCover;
   if (tab) V.libTab = tab;
   openAgenda(book, index);
-  renderStage();
 }
 export async function closeEditor() {
   deselect();
@@ -1052,10 +1141,23 @@ export function deleteImagesOf(book, otherBooks) {
   const keep = new Set([...ids(otherBooks), ...S.prefs.custom]);
   ids(book).forEach((id) => { if (!keep.has(id) && S.images[id]) delete S.images[id]; });
 }
-export async function pageToJpeg(book, p) {
-  const [W, H] = dims(book);
-  await ensureFonts();
-  const c = await canvasOf(W, H, 2, (ctx) => renderPage(ctx, p, W, H, 0, 'r'));
-  return { bytes: await toBytes(c, 'image/jpeg', 0.9), w: c.width, h: c.height };
+// Traduce la portada de Hojea al formato que dibuja la exportación de V2.
+export async function prepareExport(book) {
+  await ensureScans(book);
+  const c = book.cover, [W, H] = dims(book), elements = [], t = c.title;
+  const textFx = (fx) => {
+    if (fx === 'impreso') return { fx: '', color: t.color };
+    const dark = fx === 'grabado' ? engraveColor(c.color) : null;
+    return dark ? { fx: '', color: dark } : { fx };
+  };
+  if (t.show && book.title) {
+    const fs = Math.min(46, Math.max(26, 560 / Math.max(8, book.title.length))) * t.size;
+    elements.push({ id: 'title', type: 'text', text: book.title, x: W * 0.08, y: H * t.y, w: W * 0.7, h: fs * 3, r: 0, font: t.font, fs, it: t.italic, al: 'center', ...textFx(t.fx) });
+  }
+  const initials = (c.initials.text || '').trim().toUpperCase().slice(0, 3);
+  if (initials) elements.push({ id: 'ini', type: 'text', text: initials, x: W * 0.6, y: H * 0.875, w: W * 0.2, h: 40, r: 0, font: '"Bodoni Moda", serif', fs: 22, al: 'center', ...textFx(c.initials.fx) });
+  const photoURL = c.photoId ? await getPageUrl(c.photoId) : null;
+  return { ...book, name: book.title, cover: { ...c, elements, photoURL } };
 }
+export const exportTools = { buildZip, ensureFonts, flipbookHTML, jobsFor, renderJob, slug, toBytes };
 export { dims };

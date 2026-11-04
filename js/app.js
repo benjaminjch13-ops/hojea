@@ -5,10 +5,10 @@ import { coverDefaults, miniBookHTML } from './cover.js';
 import { renderCoverEditor } from './cover-editor.js';
 import { cropPhoto, openCamera } from './capture.js';
 import {
-  closeEditor, deleteImagesOf, ensureScans, forgetScan, initDelulu, newBlankPage, openEditor, pageThumbHTML, pageToJpeg,
+  closeEditor, deleteImagesOf, ensureScans, forgetScan, initDelulu, newBlankPage, openEditor, pageThumbHTML,
 } from './delulu.js';
 import { seedDemoBook } from './demo.js';
-import { buildPdf } from './pdf.js';
+import { openExportDialog } from './export-dialog.js';
 import { THEMES, loadTheme, saveTheme } from './themes.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
 
@@ -176,7 +176,7 @@ async function renderBook(id, token) {
           <button class="tool" data-act="zoom-out" aria-label="Alejar" title="Alejar">${icon('minus')}</button>
           <button class="tool" data-act="zoom-in" aria-label="Acercar" title="Acercar">${icon('plus')}</button>
           <button class="tool" data-act="fan" aria-label="Ver en abanico" aria-pressed="false" title="Ver en abanico">${icon('fan')}</button>
-          <button class="tool" data-act="export" aria-label="Exportar a PDF" title="Exportar a PDF">${icon('share')}</button>
+          <button class="tool" data-act="export" aria-label="Exportar" title="Exportar">${icon('share')}</button>
           <button class="tool" data-act="edit-pages" aria-label="Decorar páginas" title="Decorar páginas">${icon('edit')}</button>
           <button class="btn primary add-btn" data-act="add">${icon('camera')}<span>Agregar páginas</span></button>
         </div>
@@ -271,34 +271,11 @@ async function renderBook(id, token) {
     }
   };
 
-  const exportPdf = async () => {
-    if (!book.pages.length) { toast('Agrega páginas antes de exportar.'); return; }
-    toast('Preparando el PDF…');
-    // Una foto sin decorar se exporta tal cual; lo demás se dibuja con sus elementos.
-    const images = [];
-    for (const p of book.pages) {
-      images.push(p.scan && !p.elements.length
-        ? { bytes: new Uint8Array(await (await db.getPageBlob(p.scan)).arrayBuffer()), w: p.w, h: p.h }
-        : await pageToJpeg(book, p));
-    }
-    const file = new File([buildPdf(images)], `${book.title.replace(/[\\/:*?"<>|]/g, '_')}.pdf`, { type: 'application/pdf' });
-    if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: book.title }); } catch { /* cancelado */ }
-      return;
-    }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(file);
-    a.download = file.name;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-    toast('PDF descargado');
-  };
-
   const actions = {
     add: addFlow,
     'zoom-in': () => widget.zoomBy(1.15),
     'zoom-out': () => widget.zoomBy(0.87),
-    export: exportPdf,
+    export: () => openExportDialog(book, Math.max(1, +slider.value * 2 - 1)),
     fan(btn) {
       const on = btn.getAttribute('aria-pressed') !== 'true';
       btn.setAttribute('aria-pressed', on);
@@ -453,7 +430,26 @@ async function start() {
     app.innerHTML = '<p class="fatal">No se pudo abrir el almacenamiento de este navegador. Si estás en una ventana privada, abre Hojea en una normal.</p>';
     return;
   }
-  addEventListener('hashchange', route);
+  // El paso entre pantallas es continuo: el libro y el panel se transforman en vez de saltar.
+  const calm = matchMedia('(prefers-reduced-motion: reduce)');
+  addEventListener('hashchange', () => {
+    if (!document.startViewTransition || calm.matches || document.hidden) { route(); return; }
+    // La animación nunca puede impedir el cambio: si no arranca a tiempo, la pantalla cambia sin ella.
+    let started = false;
+    const go = () => {
+      if (started) return undefined;
+      started = true;
+      return route();
+    };
+    const transition = document.startViewTransition(go);
+    transition.ready.catch(() => {});
+    transition.finished.catch(() => {});
+    setTimeout(() => {
+      if (started) return;
+      transition.skipTransition();
+      go();
+    }, 400);
+  });
   await route();
   if ('serviceWorker' in navigator && isSecureContext) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
