@@ -49,7 +49,7 @@ export async function addPage(blob, w, h) {
 }
 
 const getPageRecord = (id) => run('pages', 'readonly', (s) => s.get(id));
-export const getPageBlob = async (id) => (await getPageRecord(id))?.blob ?? null;
+const getPageBlob = async (id) => (await getPageRecord(id))?.blob ?? null;
 
 export async function deletePage(id) {
   await run('pages', 'readwrite', (s) => s.delete(id));

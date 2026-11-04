@@ -81,7 +81,7 @@ function memoryCard(memory) {
   }
   const { book, page, index } = memory;
   return `<div class="card-eyebrow">Un recuerdo</div>
-    <a class="memory" href="#/libro/${book.id}/paginas/${index}" aria-label="Abrir ${esc(book.title)}, página ${index + 1}">
+    <a class="memory" href="#/libro/${book.id}/hoja/${index}" aria-label="Abrir ${esc(book.title)}, página ${index + 1}">
       <span class="memory-photo" style="aspect-ratio:${book.aspect || 0.72}">${pageThumbHTML(page, book, 96)}</span>
       <span class="memory-caption"><strong>${esc(book.title)}</strong><span>Página ${index + 1}</span></span>
     </a>

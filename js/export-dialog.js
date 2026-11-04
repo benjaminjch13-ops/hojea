@@ -1,7 +1,7 @@
 // Opciones de exportación de Delulu Journal V2: PDF, imágenes o página web, con o sin la libreta.
 import { exportTools as X, prepareExport } from './delulu.js';
 import { buildPdf } from './pdf.js';
-import { esc, modal, toast } from './ui.js';
+import { esc, icon, modal, toast } from './ui.js';
 
 const chips = (name, options, value) => `<div class="chips" role="group" data-field="${name}">${options.map(([v, label]) =>
   `<button type="button" class="chip" data-v="${v}" aria-pressed="${v === value}">${esc(label)}</button>`).join('')}</div>`;
@@ -36,7 +36,7 @@ export async function openExportDialog(book, currentPage = 1) {
   return modal(`
     <div class="manage-head">
       <h2>Exportar "${esc(book.title)}"</h2>
-      <button class="icon-btn dark" data-close aria-label="Cerrar">✕</button>
+      <button class="icon-btn dark" data-close aria-label="Cerrar">${icon('close')}</button>
     </div>
     <div class="export-body">
       <div class="export-form">

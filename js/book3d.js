@@ -61,7 +61,7 @@ export class Book3D {
       stage.addEventListener(k, fn, k === 'wheel' ? { passive: false } : undefined);
     }
     this.onKey = (e) => {
-      if (preview || e.target.matches?.('input:not([type=range]), textarea') || document.querySelector('dialog[open], .fullscreen')) return;
+      if (preview || e.target.matches?.('input, textarea, select') || document.querySelector('dialog[open], .fullscreen')) return;
       if (e.key === 'ArrowRight') this.next();
       else if (e.key === 'ArrowLeft') this.prev();
     };
@@ -185,9 +185,11 @@ export class Book3D {
     const aspect = this.book.aspect || 0.72;
     let h = height * 0.84;
     let w = h * aspect;
-    const maxW = width * (this.preview ? 0.62 : 0.46);
+    // El tamaño base debe caber abierta (dos páginas); cerrada se agranda para aprovechar el espacio.
+    const maxW = width * 0.46;
     if (w > maxW) { w = maxW; h = w / aspect; }
     this.w = w; this.h = h;
+    this.closedFit = Math.max(1, Math.min((width * (this.preview ? 0.66 : 0.74)) / w, (height * 0.84) / h));
     this.u = w / DESIGN_WIDTH;
     // Grosor de libreta real: crece con las páginas, con un mínimo y un máximo.
     this.thick = (clamp(26 + this.n * 3.2, 30, 62) * this.u) / this.n;
@@ -350,12 +352,13 @@ export class Book3D {
   setFan(on) {
     this.fanMode = on;
     if (on && (this.target === 0 || this.target === this.n)) this.target = Math.round(this.n / 2);
+    this.loadImages(Math.round(this.target)); // en abanico se ven todas las hojas
     this.wake();
   }
 
   // ---- Punteros ----
   onDown(e) {
-    if (e.button) return;
+    if (e.button || this.drag) return; // un segundo dedo no interrumpe el gesto en curso
     const onBook = !this.preview && e.target.closest?.('.b-leaf');
     this.drag = {
       id: e.pointerId, mode: onBook ? 'flip' : 'orbit',
@@ -509,7 +512,7 @@ export class Book3D {
     const spin = d ? 38 * d.tilt : 0;
     const squash = d ? ` scale(${(1 + d.squash * 0.05).toFixed(4)},${(1 - d.squash * 0.08).toFixed(4)})` : '';
     this.root.style.transform =
-      `${fall}scale(${this.zoom.toFixed(4)})${squash} rotateX(${(this.rx + tumble).toFixed(2)}deg) rotateY(${(this.ry + spin).toFixed(2)}deg) translateX(${shift.toFixed(2)}px)`;
+      `${fall}scale(${(this.zoom * lerp(this.closedFit, 1, clamp(Math.min(pos, n - pos), 0, 1))).toFixed(4)})${squash} rotateX(${(this.rx + tumble).toFixed(2)}deg) rotateY(${(this.ry + spin).toFixed(2)}deg) translateX(${shift.toFixed(2)}px)`;
     this.root.classList.toggle('falling', !!d);
 
     const turning = !this.reduced && this.fan < 0.35
@@ -570,6 +573,9 @@ export class Book3D {
     this.strap.style.setProperty('--swing', `${(this.swing ?? 0).toFixed(2)}deg`);
     this.strap.style.setProperty('--release', release.toFixed(3));
     this.root.style.setProperty('--strap-edge', (1 - release).toFixed(3));
+
+    // La cinta acompaña a las hojas: al llegar a la contraportada, cuelga de ese lado.
+    this.ribbon.style.transform = `translateX(${(-w * 0.32 * clamp(pos - (n - 1), 0, 1)).toFixed(2)}px)`;
 
     const left = -w * Math.min(pos, 1), right = w * Math.min(n - pos, 1);
     this.floor.style.left = `${left}px`;

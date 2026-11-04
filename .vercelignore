@@ -1,6 +1,5 @@
 .claude
 .git
-.nojekyll
 README.md
 node_modules
 package.json

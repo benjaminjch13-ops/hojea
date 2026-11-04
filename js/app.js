@@ -28,11 +28,11 @@ async function route() {
   if (token !== routeToken) return;
   const cover = location.hash.match(/^#\/libro\/([^/]+)\/portada$/);
   const pages = location.hash.match(/^#\/libro\/([^/]+)\/paginas\/([^/]+)$/);
-  const reading = location.hash.match(/^#\/libro\/([^/]+)$/);
+  const reading = location.hash.match(/^#\/libro\/([^/]+)(?:\/hoja\/(\d+))?$/);
   let nextCleanup;
   if (cover) nextCleanup = await openCoverRoute(cover[1], token);
   else if (pages) nextCleanup = await openPagesRoute(pages[1], pages[2], token);
-  else if (reading) nextCleanup = await renderBook(reading[1], token);
+  else if (reading) nextCleanup = await renderBook(reading[1], token, reading[2]);
   else nextCleanup = await renderShelf(token);
   if (token === routeToken) cleanup = nextCleanup ?? null;
   else nextCleanup?.();
@@ -54,7 +54,7 @@ async function openCoverRoute(id, token) {
   if (!book) return undefined;
   const drop = justCreated === id;
   justCreated = null;
-  return renderCoverEditor(app, book, { drop });
+  return renderCoverEditor(app, book, { drop, fresh: drop });
 }
 
 // Abre el editor de páginas. `where` es el número de página, o "nueva" para agregar una en blanco.
@@ -67,6 +67,8 @@ async function openPagesRoute(id, where, token) {
     await db.saveBook(book);
   }
   const index = creating ? book.pages.length - 1 : Math.min(Math.max(0, +where || 0), book.pages.length - 1);
+  // Sin esto, recargar en /paginas/nueva agregaba otra página en blanco cada vez.
+  if (where === 'nueva') history.replaceState(null, '', `#/libro/${book.id}/paginas/${index}`);
   const scansBefore = new Set(book.pages.map((p) => p.scan).filter(Boolean));
   app.innerHTML = '';
   openEditor(book, index, {
@@ -78,7 +80,12 @@ async function openPagesRoute(id, where, token) {
     await closeEditor();
     // Las fotos de páginas borradas se eliminan aquí, cuando ya no se puede deshacer.
     const scansNow = new Set(book.pages.map((p) => p.scan).filter(Boolean));
-    await Promise.all([...scansBefore].filter((s) => !scansNow.has(s)).map(async (s) => {
+    const removed = [...scansBefore].filter((s) => !scansNow.has(s));
+    if (removed.includes(book.cover.photoId) && !book.cover.photoOwn) {
+      book.cover.photoId = null; // la portada usaba una foto que ya no existe
+      await db.saveBook(book);
+    }
+    await Promise.all(removed.map(async (s) => {
       forgetScan(s);
       await db.deletePage(s);
     }));
@@ -149,7 +156,7 @@ function themeDialog() {
 }
 
 // ---------- Cuaderno ----------
-async function renderBook(id, token) {
+async function renderBook(id, token, startPage) {
   const book = await loadBook(id, token);
   if (!book) return;
   app.innerHTML = `
@@ -204,6 +211,8 @@ async function renderBook(id, token) {
     widget.setBook(book);
   };
   refresh();
+  // Al llegar desde un recuerdo, la libreta se abre en esa página.
+  if (startPage !== undefined && book.pages[+startPage]) widget.goTo(widget.leafForPage(+startPage));
 
   slider.addEventListener('input', () => widget.goTo(+slider.value));
 

@@ -92,12 +92,13 @@ function panelTexto(book) {
     + (c.initials.text ? field('Efecto de las iniciales', chips('initials.fx', TEXT_EFFECTS, c.initials.fx)) : '');
 }
 
-export async function renderCoverEditor(app, book, { drop = false } = {}) {
+// fresh: la libreta se acaba de crear. Si se sale con la flecha sin cambiar nada, se descarta.
+export async function renderCoverEditor(app, book, { drop = false, fresh = false } = {}) {
   let tab = 'cuero';
   app.innerHTML = `
     <section class="view cover-edit">
       <header class="bar">
-        <a class="icon-btn" href="#/libro/${book.id}" aria-label="Volver al cuaderno">${icon('back')}</a>
+        <a class="icon-btn" href="${fresh ? '#/' : `#/libro/${book.id}`}" aria-label="${fresh ? 'Volver sin crear la libreta' : 'Volver al cuaderno'}">${icon('back')}</a>
         <div class="title-wrap"><input class="title-input" value="${esc(book.title)}" maxlength="60" aria-label="Nombre del cuaderno"><div class="sub">Personaliza tu libreta</div></div>
         <a class="btn primary" href="#/libro/${book.id}">Listo</a>
       </header>
@@ -146,7 +147,9 @@ export async function renderCoverEditor(app, book, { drop = false } = {}) {
     keys.reduce((o, k) => o[k], book.cover)[last] = value;
     if (path === 'elastic.orient') book.cover.elastic.pos = value === 'horizontal' ? 0.45 : 0.84;
   };
+  let touched = false;
   const changed = (repaint = true) => {
+    touched = true;
     widget.refreshCover();
     if (repaint) paintPanel();
     saveSoon();
@@ -236,9 +239,10 @@ export async function renderCoverEditor(app, book, { drop = false } = {}) {
   view.addEventListener('change', onChange);
   paintPanel();
 
-  return () => {
-    if (saveTimer) saveNow();
+  return async () => {
     widget.destroy();
+    if (fresh && !touched && location.hash === '#/') await db.deleteBook(book);
+    else if (saveTimer) await saveNow();
   };
 }
 

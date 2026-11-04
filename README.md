@@ -28,17 +28,17 @@ Luego abre <http://localhost:5173>.
 - **Administrar:** reordena, amplía y elimina páginas.
 - **Exportar:** PDF, imágenes PNG o una página web hojeable, como libro abierto o una página por hoja, con o sin el diseño de la libreta, con rango de páginas y calidad para imprimir.
 
-## Usarla en tu celular
+## Publicación
 
-Para una prueba rápida con el celular en la misma red Wi-Fi:
+La app está en <https://dates-with-muu.vercel.app>. Cada push a `main` la publica en Vercel; `vercel.json` y `.vercelignore` definen qué se sube.
+
+Para probar en un celular antes de publicar, con el celular en la misma red Wi-Fi:
 
 ```bash
 npm run lan
 ```
 
-Abre `http://<IP-de-tu-computadora>:5173` en el celular. Sin HTTPS, el navegador no permite la cámara en vivo ni instalar la app, así que "Tomar fotos" abre la cámara del sistema.
-
-Para tener todo, publica estos archivos en un hosting estático con HTTPS (Netlify, Vercel, GitHub Pages o Cloudflare Pages): `index.html`, `manifest.webmanifest`, `sw.js` y las carpetas `css`, `js` e `icons`.
+Abre `http://<IP-de-tu-computadora>:5173`. Sin HTTPS el navegador no permite la cámara en vivo ni instalar la app, así que "Tomar fotos" abre la cámara del sistema.
 
 ## Tus datos
 

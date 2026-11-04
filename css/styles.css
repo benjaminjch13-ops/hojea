@@ -200,7 +200,7 @@ button:disabled { cursor: default; opacity: .4; }
 .gutter { position: absolute; inset: 0; pointer-events: none; }
 .front .gutter { background: linear-gradient(to right, rgba(40, 30, 20, .3), rgba(40, 30, 20, .08) 5%, transparent 14%); }
 .back .gutter { background: linear-gradient(to left, rgba(40, 30, 20, .3), rgba(40, 30, 20, .08) 5%, transparent 14%); }
-.shade { position: absolute; inset: 0; background: #17173f; opacity: 0; pointer-events: none; }
+.shade { position: absolute; inset: 0; background: #1b1a1e; opacity: 0; pointer-events: none; }
 .edge, .edge-b, .spine3d { position: absolute; pointer-events: none; backface-visibility: visible; overflow: hidden; }
 .edge, .spine3d { top: calc(var(--h) / -2); height: var(--h); width: var(--t, 1px); transform-origin: left center; }
 .edge-b { top: calc(var(--h) / 2); width: var(--w); height: var(--t, 1px); transform-origin: center top; }
@@ -223,14 +223,11 @@ button:disabled { cursor: default; opacity: .4; }
 }
 
 .empty-note {
-  position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%);
-  width: min(320px, calc(100% - 32px));
-  padding: 14px 16px 16px; border-radius: 16px;
-  background: rgba(26, 27, 84, .78);
-  text-align: center;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 14px;
+  flex: none; padding: 0 16px 6px; text-align: center;
 }
 .empty-note[hidden] { display: none; }
-.empty-note p { margin: 0 0 10px; }
+.empty-note p { margin: 0; }
 
 .controls {
   flex: none;
@@ -274,7 +271,7 @@ dialog p { margin: 0 0 8px; color: var(--sheet-soft); }
 /* ---------- Editor de portada ---------- */
 .cover-edit { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 .cover-edit .bar .btn.primary { text-decoration: none; }
-.edit-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 8px; padding: 0 16px 16px; }
+.edit-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 32vw, 380px); gap: 8px; padding: 0 16px 16px; }
 .edit-stage-wrap { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .edit-stage-wrap .b-stage { flex: 1; }
 .edit-stage-tools { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
@@ -363,7 +360,7 @@ dialog.lightbox {
 .fullscreen {
   position: fixed; inset: 0; z-index: 10;
   display: flex; flex-direction: column;
-  background: #15163f; color: #fff;
+  background: color-mix(in srgb, var(--bg-1) 42%, #0b0b12); color: #fff;
 }
 .crop-title { font: 500 20px/1.25 var(--serif); }
 .crop-stage { flex: 1; min-height: 0; position: relative; touch-action: none; overflow: hidden; }
@@ -452,8 +449,6 @@ dialog.lightbox {
   0%, 100% { transform: translateY(0) rotateZ(0); }
   50% { transform: translateY(-7px) rotateZ(.35deg); }
 }
-.b-book { animation: book-in .45s ease-out; }
-@keyframes book-in { from { opacity: 0; } }
 .b-leaf.bending > .face { visibility: hidden; }
 .bend-strip { position: absolute; left: 100%; top: 0; width: 100%; height: 100%; transform-origin: left center; transform-style: preserve-3d; }
 .bend-strip.first { left: 0; width: calc(100% / 6); }
@@ -461,11 +456,10 @@ dialog.lightbox {
 .bend-clip.front { left: 0; }
 .bend-clip.back { left: -.7px; transform: rotateY(180deg); }
 .bend-face { top: 0 !important; right: auto !important; bottom: auto !important; width: var(--w); height: var(--h); transform: none !important; backface-visibility: visible !important; -webkit-backface-visibility: visible !important; }
-.bend-shade { position: absolute; inset: 0; background: #17173f; opacity: 0; pointer-events: none; }
+.bend-shade { position: absolute; inset: 0; background: #1b1a1e; opacity: 0; pointer-events: none; }
 .page-cast { position: absolute; left: 0; top: calc(var(--h) / -2); width: var(--w); height: var(--h); transform-origin: left center; opacity: 0; pointer-events: none; background: linear-gradient(to right, rgba(20, 15, 45, .55), rgba(20, 15, 45, .14) 62%, transparent); }
 
 /* ---------- La libreta cae del cielo ---------- */
-.b-book.falling { animation: none; }
 .drop-ground { position: absolute; left: 50%; width: var(--w); height: 34px; margin-left: calc(var(--w) / -2); border-radius: 50%; background: radial-gradient(closest-side, rgba(12, 10, 50, .6), transparent); transform: scale(var(--s, .4)); opacity: 0; pointer-events: none; }
 .b-stage.shake { animation: stage-shake .42s cubic-bezier(.3, .7, .3, 1); }
 @keyframes stage-shake {
@@ -530,7 +524,7 @@ dialog.lightbox {
 .since-form { display: flex; flex-direction: column; gap: 4px; }
 .since-form .text-field { color-scheme: light; }
 @media (prefers-reduced-motion: reduce) {
-  .b-float, .b-book, .home-deco span, .home-card, .shelf-item, .shelf-new { animation: none; }
+  .b-float, .home-deco span, .home-card, .shelf-item, .shelf-new { animation: none; }
 }
 .edit-stage-tools a.btn { text-decoration: none; }
 

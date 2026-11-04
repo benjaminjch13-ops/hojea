@@ -25,8 +25,6 @@ function go(screen) {
   if (screen === 'home') HOOKS.back?.();
 }
 const openCover = (a) => HOOKS.cover?.(a);
-const FL = { a: null, i: -1 };
-const flipIdx = () => [];
 const TORNASOL = '#e6e1ee';
 
 // Tamaño de diseño de una página: siempre 560 de ancho, con la proporción de la hoja del libro.
@@ -79,7 +77,6 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const clone=o=>JSON.parse(JSON.stringify(o));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const ico=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
-function ago(ts){const s=(Date.now()-ts)/1000;if(s<60)return'editada hace un momento';if(s<3600)return`editada hace ${Math.round(s/60)} min`;if(s<86400)return`editada hace ${Math.round(s/3600)} h`;const d=Math.round(s/86400);return d===1?'editada ayer':`editada hace ${d} días`}
 function shade(hex,amt){let c=hex.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');let n=parseInt(c,16),r=n>>16,g=n>>8&255,b=n&255;const f=v=>clamp(Math.round(amt<0?v*(1+amt):v+(255-v)*amt),0,255);return'#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}
 
 let SHARED_IMG={},LPC=0;
@@ -133,7 +130,6 @@ const FONTS=[['Bodoni','"Bodoni Moda", serif'],['Pincel','"Caveat Brush", cursiv
 const BGS=[['plain','Liso'],['lines','Líneas'],['grid','Cuadrícula'],['dots','Puntos'],['vintage','Vintage'],['kraft','Kraft']];
 const BG_COLORS=['#fbf7f0','#fffdf8','#f4ebe0','#f6e8e8','#eef1e8','#efecf5','#f3efe2'];
 
-const SIZES={a5:[560,790],a6:[397,560],b6:[500,700],sq:[620,620],pocket:[440,680]};
 const TEMPLATES=[['blank','En blanco'],['diario','Diario personal'],['gratitud','Gratitud'],['bullet','Bullet journal'],['semanal','Agenda semanal'],['mensual','Agenda mensual'],['viajes','Diario de viajes'],['recuerdos','Álbum de recuerdos'],['emocional','Diario emocional'],['estudio','Agenda de estudio'],['ideas','Libreta de ideas'],['scrapbook','Scrapbook libre']];
 
 /* ================= textures ================= */
@@ -149,15 +145,6 @@ function makeTex(kind){if(TEX[kind])return TEX[kind];const c=document.createElem
   if(kind==='saffiano'){x.strokeStyle='rgba(0,0,0,.18)';x.lineWidth=1;for(let i=-220;i<440;i+=4){x.beginPath();x.moveTo(i,0);x.lineTo(i+220,220);x.stroke();x.beginPath();x.moveTo(i+220,0);x.lineTo(i,220);x.stroke()}}
   TEX[kind]=c.toDataURL('image/jpeg',.82);document.documentElement.style.setProperty('--tx-'+kind,`url(${TEX[kind]})`);return TEX[kind]}
 const texVar=k=>(makeTex(k),`var(--tx-${k})`);
-const PATTERNS={
-  none:()=>'none',
-  rombos:c=>`repeating-linear-gradient(45deg,transparent 0 22px,rgba(255,255,255,.08) 22px 23px),repeating-linear-gradient(-45deg,transparent 0 22px,rgba(255,255,255,.08) 22px 23px)`,
-  puntos:()=>`radial-gradient(rgba(255,255,255,.13) 1.5px,transparent 2px) 0 0/16px 16px`,
-  rayas:()=>`repeating-linear-gradient(90deg,transparent 0 18px,rgba(0,0,0,.08) 18px 22px)`,
-  floral:()=>`radial-gradient(circle at 50% 50%,rgba(255,255,255,.12) 0 3px,transparent 4px) 0 0/40px 40px,radial-gradient(circle at 50% 50%,rgba(255,255,255,.08) 0 8px,transparent 9px) 20px 20px/40px 40px`,
-  cuadros:()=>`linear-gradient(rgba(0,0,0,.09) 2px,transparent 2px) 0 0/34px 34px,linear-gradient(90deg,rgba(0,0,0,.09) 2px,transparent 2px) 0 0/34px 34px`
-};
-const PATTERN_NAMES=[['none','Ninguno'],['rombos','Rombos'],['puntos','Puntos'],['rayas','Rayas'],['floral','Floral'],['cuadros','Cuadros']];
 
 /* ================= element rendering ================= */
 function tapeBg(p,c){const w='rgba(255,255,255,.55)';return{
@@ -167,7 +154,7 @@ function tapeBg(p,c){const w='rgba(255,255,255,.55)';return{
   hearts:`radial-gradient(circle at 30% 40%,${w} 2px,transparent 2.5px) 0 0/14px 12px,radial-gradient(circle at 70% 40%,${w} 2px,transparent 2.5px) 0 0/14px 12px,${c}`}[p]||c}
 const ZZ='polygon(0 0,3% 12%,0 25%,3% 37%,0 50%,3% 62%,0 75%,3% 87%,0 100%,100% 100%,97% 87%,100% 75%,97% 62%,100% 50%,97% 37%,100% 25%,97% 12%,100% 0)';
 const TORN='polygon(0 4%,8% 0,17% 3%,26% 1%,35% 4%,46% 0,57% 3%,66% 1%,77% 4%,88% 1%,100% 3%,99% 30%,100% 60%,98% 100%,88% 97%,76% 100%,64% 96%,52% 99%,40% 96%,28% 100%,16% 97%,4% 100%,0 70%,1% 35%)';
-function textHTML(t,interactive){const lines=String(t||'').split('\n');return lines.map((ln,i)=>{const m=ln.match(/^\s*\[( |x)\]\s?(.*)$/i);
+function textHTML(t){const lines=String(t||'').split('\n');return lines.map((ln,i)=>{const m=ln.match(/^\s*\[( |x)\]\s?(.*)$/i);
   if(m){const on=m[1].toLowerCase()==='x';return `<div><span class="chk${on?' on':''}" data-line="${i}"></span><span class="${on?'done':''}">${esc(m[2])}</span></div>`}
   return `<div>${esc(ln)||'&nbsp;'}</div>`}).join('')}
 function textStyle(e){const fs=e.fs||24;return `font-family:${(e.font||'Caveat, cursive').replace(/"/g,"'")};font-size:${fs}px;color:${e.color||'#3b2d26'};font-weight:${e.b?700:400};font-style:${e.it?'italic':'normal'};text-decoration:${e.u?'underline':'none'};text-align:${e.al||'left'};`}
@@ -219,8 +206,6 @@ const elsHTML=els=>els.map((e,i)=>elHTML(e,i+1)).join('');
 /* One page renderer for the editor (live: elements painted later), page turns, thumbnails and the shared view. */
 function pageHTML(p,pi,W,H,cls,live){if(!p)return `<div class="page ${cls} blankleaf" style="width:${W}px;height:${H}px"></div>`;
   return `<div class="page ${cls}"${live?` data-pi="${pi}"`:''} style="width:${W}px;height:${H}px;${bgCSS(p.bg)}">${scanHTML(p)}<div class="els" style="position:absolute;inset:0">${live?'':elsHTML(p.elements)}</div>${live&&!p.elements.length&&!p.scan?'<span class="pagehint">Página en blanco · usa <b>Agregar</b> para pegar stickers, fotos o texto</span>':''}<span class="num">${pi+1}</span></div>`}
-/* Runtime capabilities of the viewer (null when this view can't use them). */
-async function cap(n){try{return window.claude?.use?await window.claude.use(n):null}catch(e){return null}}
 
 const T=(text,x,y,w,h,o={})=>({id:uid(),type:'text',text,x,y,w,h,r:0,font:'Caveat, cursive',fs:26,color:'#3b2d26',...o});
 const ST=(sid,x,y,s,o={})=>({id:uid(),type:'sticker',sid,x,y,w:s,h:s,r:o.r||0,...o});
@@ -261,8 +246,8 @@ function commit(){const s=snap();if(s===ED.last)return;ED.hist.push(ED.last);if(
 function restore(s){const o=JSON.parse(s);ED.a.pages=o.pages;ED.a.cover=o.cover;ED.last=s;ED.sel=null;ED.a.updated=Date.now();persist();ED.rerender();updUndo()}
 function undo(){if(!ED.hist.length)return;ED.fut.push(ED.last);restore(ED.hist.pop())}
 function redo(){if(!ED.fut.length)return;ED.hist.push(ED.last);restore(ED.fut.pop())}
-function updUndo(){['#btnUndo','#cUndo'].forEach(s=>$(s).disabled=!ED.hist.length);['#btnRedo','#cRedo'].forEach(s=>$(s).disabled=!ED.fut.length)}
-$('#btnUndo').onclick=$('#cUndo').onclick=undo;$('#btnRedo').onclick=$('#cRedo').onclick=redo;
+function updUndo(){$('#btnUndo').disabled=!ED.hist.length;$('#btnRedo').disabled=!ED.fut.length}
+$('#btnUndo').onclick=undo;$('#btnRedo').onclick=redo;
 
 /* ---- selection: one element, several, or whole groups ---- */
 const selEls=()=>{if(!ED.sel)return[];const s=new Set(ED.sel.ids);return ED.sel.arr.filter(e=>s.has(e.id))};
@@ -298,8 +283,8 @@ function snapMove(arr,mov,b0,dx,dy,W,H,s){const th=7/s,ids=new Set(mov.map(e=>e.
 function showGuides(surf,lines){let g=surf.querySelector(':scope > .guides');if(!lines.length){g?.remove();return}
   if(!g){g=document.createElement('div');g.className='guides';surf.appendChild(g)}
   g.innerHTML=lines.map(l=>l.v?`<i style="left:${l.p}px;top:-2000px;bottom:-2000px;width:calc(1px*var(--inv,1))"></i>`:`<i style="top:${l.p}px;left:-2000px;right:-2000px;height:calc(1px*var(--inv,1))"></i>`).join('')}
-function updSnapBtn(){['#btnSnap','#cSnap'].forEach(s=>$(s)?.classList.toggle('on',ED.snap))}
-['#btnSnap','#cSnap'].forEach(s=>$(s).onclick=()=>{ED.snap=!ED.snap;S.prefs.snap=ED.snap;persist();updSnapBtn();toast(ED.snap?'Guías activadas (mantén Alt para moverte libre)':'Guías desactivadas')});
+function updSnapBtn(){$('#btnSnap').classList.toggle('on',ED.snap)}
+$('#btnSnap').onclick=()=>{ED.snap=!ED.snap;S.prefs.snap=ED.snap;persist();updSnapBtn();toast(ED.snap?'Guías activadas (mantén Alt para moverte libre)':'Guías desactivadas')};
 
 function bindSurface(surf,arr,W,H){
   surf.ondragover=ev=>{if(ED.drag){ev.preventDefault()}};
@@ -416,8 +401,8 @@ function openBgSheet(e){closeSheet();const host=ctxHost(),src=imgURL(e.type==='i
     closeSheet();repaintSel();commit();renderCtx();toast('Fondo quitado. También quedó en “Tus stickers”')}}
 
 /* ---- contextual toolbar ---- */
-function ctxHost(){return ED.mode==='cover'?$('#cctx'):$('#ctx')}
-function renderCtx(){$('#ctx').innerHTML='';$('#cctx').innerHTML='';const host=ctxHost();
+function ctxHost(){return $('#ctx')}
+function renderCtx(){$('#ctx').innerHTML='';const host=ctxHost();
   if(ED.draw)return renderDrawBar(host);
   if(ED.lasso){host.innerHTML=`<div class="ctx"><span class="hint" style="padding:0 10px">Dibuja sobre la foto el contorno que quieres conservar</span><button class="btn on" data-c="lassoX" style="padding:7px 12px">Cancelar</button></div>`;
     host.firstChild.onclick=ev=>{if(ev.target.closest('[data-c]')){ED.lasso=null;repaintSel();renderCtx()}};return}
@@ -516,7 +501,7 @@ function toggleDraw(on){if(on){deselect();ED.draw=ED.draw0||{tool:'pen',color:'#
 $('#btnDraw').onclick=()=>toggleDraw(!ED.draw);
 
 document.addEventListener('keydown',ev=>{const tag=document.activeElement?.tagName;if(/INPUT|TEXTAREA|SELECT/.test(tag))return;
-  const inEd=$('#open').classList.contains('show')||$('#cover').classList.contains('show');if(!inEd||$('dialog[open]'))return;
+  const inEd=$('#open').classList.contains('show');if(!inEd||$('dialog[open]'))return;
   const mod=ev.metaKey||ev.ctrlKey,k=ev.key.toLowerCase();
   if(mod&&k==='z'){ev.preventDefault();ev.shiftKey?redo():undo();return}
   if(mod&&k==='y'){ev.preventDefault();redo();return}
@@ -574,7 +559,7 @@ $('#btnZoomIn').onclick=()=>{V.zoom=Math.min(3,V.zoom*1.25);renderStage()};$('#b
 $('#btnCoverFromOpen').onclick=()=>openCover(ED.a);
 $('#btnPageMenu').onclick=()=>{V.thumbs=!V.thumbs;$('#thumbs').hidden=!V.thumbs;$('#btnPageMenu').classList.toggle('on',V.thumbs);if(V.thumbs)refreshThumbs();renderStage()};
 $('#btnLibMobile').onclick=()=>{$('#lib').classList.toggle('openp');tipOnce('lib','Toca un sticker o una foto para pegarlo en la página')};
-addEventListener('resize',()=>{clearTimeout(V.rt);V.rt=setTimeout(()=>{if($('#open').classList.contains('show'))renderStage();if($('#cover').classList.contains('show'))renderCoverStage()},120)});
+addEventListener('resize',()=>{clearTimeout(V.rt);V.rt=setTimeout(()=>{if($('#open').classList.contains('show'))renderStage()},120)});
 function miniPage(p,W,H,w){const s=w/W;return `<div class="mini" style="width:${W}px;height:${H}px;transform:scale(${s});${bgCSS(p.bg)}">${scanHTML(p)}<div class="els" style="position:absolute;inset:0">${elsHTML(p.elements)}</div></div>`}
 function refreshThumbs(){if(!V.thumbs||ED.mode!=='page')return;const a=ED.a,[W,H]=dims(a),w=64,h=w*H/W;const cur=activePageIndex();const vis=spreadIdx();
   $('#thumbs').innerHTML=`<div style="display:flex;flex-direction:column;gap:4px;flex:none;justify-content:center">
@@ -637,7 +622,7 @@ function makeFromKey(k){const[ty,a,b]=k.split(':');
     return{type:'text',text:m[0],font:m[1],fs:m[2],w:m[3],h:m[4],color:'#3b2d26',b:a==='label',bg:a==='label'?'cinta':'',bgc:'#f3dfe1',al:a==='label'?'center':'left'}}
   return null}
 let libShownTab=null;
-function renderLib(){const keep=['.tabs','.chips'].map(s=>[s,$(`#lib ${s}`)?.scrollLeft||0]),top=$('#lib .body')?.scrollTop||0,sameTab=libShownTab===V.libTab;libShownTab=V.libTab;const tabs=[['plantillas','Plantillas'],['stickers','Stickers'],['cintas','Cintas'],['papeles','Papeles'],['texto','Texto'],['fotos','Fotos'],['fondo','Fondo'],['favs','★']];
+function renderLib(){if(!ED.a)return;const keep=['.tabs','.chips'].map(s=>[s,$(`#lib ${s}`)?.scrollLeft||0]),top=$('#lib .body')?.scrollTop||0,sameTab=libShownTab===V.libTab;libShownTab=V.libTab;const tabs=[['plantillas','Plantillas'],['stickers','Stickers'],['cintas','Cintas'],['papeles','Papeles'],['texto','Texto'],['fotos','Fotos'],['fondo','Fondo'],['favs','★']];
   $('#lib').innerHTML=`<div class="tabs">${tabs.map(([v,l])=>`<button class="tab${V.libTab===v?' on':''}" data-tab="${v}">${l}</button>`).join('')}<div class="spacer"></div><button class="btn ghost icon mobile-only" data-closelib aria-label="Cerrar">${ico('x')}</button></div><div class="body">${libItems()}</div>`;
   keep.forEach(([s,x])=>{const el=$(`#lib ${s}`);if(el&&(s==='.tabs'||sameTab))el.scrollLeft=x});if(sameTab)$('#lib .body').scrollTop=top;
   $('#lib .tab.on')?.scrollIntoView({block:'nearest',inline:'nearest'})}
@@ -673,7 +658,7 @@ lib.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.dataset.add)e
 const TURN={busy:false};
 const PAD=14;
 const staticPage=(p,pi,W,H,cls)=>pageHTML(p,pi,W,H,cls,false);
-function turnCtx(){if($('#share').classList.contains('show')){if(!FL.a||FL.i<0)return null;return{stage:$('#shareStage'),pages:FL.a.pages,dims:dims(FL.a),idx:flipIdx(),go:t=>{FL.i=t;renderFlip()},back:()=>{FL.i=-1;renderFlip()}}}
+function turnCtx(){
   if(!ED.a||ED.mode!=='page')return null;return{stage:$('#stage'),pages:ED.a.pages,dims:dims(ED.a),idx:spreadIdx(),go:t=>{V.cur=t;ED.sel=null;closeSheet();ED.activeArr=null;renderStage()}}}
 const motionOn=()=>document.documentElement.dataset.motion!=='reduced'&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -729,12 +714,11 @@ function turnPointerDown(ev){if(ev.button>0||TURN.busy)return;const ctx=turnCtx(
   const cleanup=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up)};
   document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up)}
 $('#stage').addEventListener('pointerdown',turnPointerDown,true);
-$('#shareStage').addEventListener('pointerdown',turnPointerDown,true);
 
 /* edge strips with a grab cursor and the folded corner hint */
-function turnZones(n,idx,W,H){const dbl=idx.length>1,last=idx[idx.length-1],x=PAD+W*idx.length;
+function turnZones(n,idx,W,H){const last=idx[idx.length-1],x=PAD+W*idx.length;
   return `${idx[0]>0?`<i class="tz l" data-dir="-1" style="left:0;top:${PAD}px;height:${H}px" title="Arrastra para volver"></i>`:''}${last<n-1?`<i class="tz r" data-dir="1" style="left:${x-24}px;top:${PAD}px;height:${H}px" title="Arrastra para pasar la página"></i>`:''}`}
-function ribbonHTML(a,W,H,dbl){const c=a.cover.ribbon;if(c==='none')return'';const col=c||'#b5646d';
+function ribbonHTML(a,W,H,dbl){const c=a.cover.ribbon;if(c==='none'||!dbl)return'';const col=c||'#b5646d';
   return `<i class="ribbon" style="left:${PAD+(dbl?W:0)+22}px;top:${PAD-6}px;height:${H+40}px;--rb:${col}"></i>`}
 function stackEdges(n,idx){const before=idx[0],after=n-1-idx[idx.length-1],w=v=>clamp(Math.round(v*.7),0,7);
   return `${before?`<i class="stk l" style="width:${w(before)+1}px"></i>`:''}${after?`<i class="stk r" style="width:${w(after)+1}px"></i>`:''}`}
@@ -945,7 +929,6 @@ function packPage(pk,i,W,H){if(pk==='basicas'){const p=templatePages(BASICS[i][0
   const t=PACKS.find(p=>p.id===pk).pages[i][1](W,H);const p=pg(t.bg,t.els);if(t.bgc)p.bg.color=t.bgc;return p}
 function insertTemplatePage(pk,i){const a=ED.a,[W,H]=dims(a),p=packPage(pk,i,W,H),at=activePageIndex()+1;a.pages.splice(at,0,p);V.cur=at;ED.activeArr=p.elements;ED.sel=null;commit();renderStage();refreshThumbs();renderLib();
   toast(`Página “${tplNames(pk)[i]}” agregada`);if(innerWidth<=820)$('#lib').classList.remove('openp')}
-const typeLabel=t=>t?.startsWith('pack:')?'Paquete '+(PACKS.find(p=>'pack:'+p.id===t)?.n||''):(TEMPLATES.find(x=>x[0]===t)||['','En blanco'])[1];
 let curPack='basicas';
 function packItems(){const a=ED.a,[W,H]=dims(a),pk={st:curPack==='basicas'?['star','heart','flower','sparkle','leaf','cup']:PACKS.find(p=>p.id===curPack).st,pages:tplNames(curPack).map(n=>[n])},w=122,h=w*H/W;
   return `<div class="chips">${[{id:'basicas',n:'Básicas'},...PACKS].map(p=>`<button class="chip${p.id===curPack?' on':''}" data-pack="${p.id}">${p.n}</button>`).join('')}</div>
@@ -1179,4 +1162,3 @@ export async function prepareExport(book) {
   return { ...book, name: book.title, cover: { ...c, elements, photoURL } };
 }
 export const exportTools = { buildZip, ensureFonts, flipbookHTML, jobsFor, renderJob, slug, toBytes };
-export { dims };

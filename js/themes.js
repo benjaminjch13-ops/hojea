@@ -14,7 +14,7 @@ export const THEMES = [
   { id: 'halloween', name: 'Halloween', bg1: '#1A1422', bg2: '#241C2E', accent: '#F08A3E' },
 ];
 
-export function applyTheme(id) {
+function applyTheme(id) {
   const t = THEMES.find((x) => x.id === id) ?? THEMES[0];
   const st = document.documentElement.style;
   st.setProperty('--bg-1', t.bg1);

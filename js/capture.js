@@ -138,7 +138,7 @@ export async function cropPhoto(file, index, total) {
 
     // Lupa para colocar la esquina con precisión, incluso bajo el dedo.
     if (active >= 0) {
-      const [px, py] = pts[active];
+      const [px] = pts[active];
       const r = 56, zoom = 2.5;
       const lx = px < stage.clientWidth / 2 ? stage.clientWidth - r - 14 : r + 14;
       const ly = r + 14;
