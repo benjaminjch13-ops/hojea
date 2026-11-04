@@ -1,10 +1,12 @@
 // Pantallas y navegación de Hojea.
 import * as db from './db.js';
 import { Book3D } from './book3d.js';
-import { PALETTES, PATTERNS, coverImage } from './covers.js';
+import { coverDefaults, miniBookHTML } from './cover.js';
+import { renderCoverEditor } from './cover-editor.js';
 import { cropPhoto, openCamera } from './capture.js';
 import { seedDemoBook } from './demo.js';
 import { buildPdf } from './pdf.js';
+import { THEMES, loadTheme, saveTheme } from './themes.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
 
 const app = document.getElementById('app');
@@ -16,102 +18,88 @@ async function route() {
   const token = ++routeToken;
   cleanup?.();
   cleanup = null;
-  const m = location.hash.match(/^#\/libro\/(.+)$/);
-  const nextCleanup = m ? await renderBook(m[1], token) : await renderShelf(token);
+  const editing = location.hash.match(/^#\/libro\/([^/]+)\/portada$/);
+  const reading = location.hash.match(/^#\/libro\/([^/]+)$/);
+  let nextCleanup;
+  if (editing) nextCleanup = await openEditor(editing[1], token);
+  else if (reading) nextCleanup = await renderBook(reading[1], token);
+  else nextCleanup = await renderShelf(token);
   if (token === routeToken) cleanup = nextCleanup ?? null;
   else nextCleanup?.();
 }
 
-// ---------- Estante ----------
-function coverHtml(book, url) {
-  const photo = url ? `<img class="cover-photo" src="${url}" alt="">` : '';
-  return `<div class="mini-cover" style="background-image:${coverImage(book.palette, book.pattern)};aspect-ratio:${book.aspect || 0.72}">
-    ${photo}<div class="cover-label">${esc(book.title)}</div></div>`;
+async function openEditor(id, token) {
+  const book = await db.getBook(id);
+  if (token !== routeToken) return undefined;
+  if (!book) {
+    location.hash = '#/';
+    return undefined;
+  }
+  return renderCoverEditor(app, book);
 }
 
+// Carga las imágenes de portada que estén dentro de un elemento.
+function loadCoverPhotos(root) {
+  root.querySelectorAll('img[data-id]').forEach(async (img) => {
+    const url = await db.getPageUrl(img.dataset.id);
+    if (url) img.src = url;
+  });
+}
+
+// ---------- Estante ----------
 async function renderShelf(token) {
   const books = await db.listBooks();
-  if (token !== routeToken) return;
-  const urls = await Promise.all(books.map((b) => (b.coverPageId ? db.getPageUrl(b.coverPageId) : '')));
   if (token !== routeToken) return;
   app.innerHTML = `
     <section class="view shelf">
       <header class="shelf-head">
-        <h1>Hojea</h1>
-        <p>Tus cuadernos de papel, en la pantalla.</p>
+        <div>
+          <h1>Hojea</h1>
+          <p>Tus cuadernos de papel, en libretas hechas a tu gusto.</p>
+        </div>
+        <button class="icon-btn" data-theme aria-label="Cambiar el fondo" title="Cambiar el fondo">${icon('palette')}</button>
       </header>
       <div class="shelf-grid">
-        ${books.map((b, i) => `
+        ${books.map((b) => `
           <a class="shelf-item" href="#/libro/${b.id}">
-            ${coverHtml(b, urls[i])}
+            ${miniBookHTML(b)}
             <span class="shelf-meta"><strong>${esc(b.title)}</strong><span>${pageCount(b.pages.length)}</span></span>
           </a>`).join('')}
         <button class="shelf-new" data-new>
           <span class="shelf-new-box">${icon('plus')}</span>
-          <span class="shelf-meta"><strong>Nuevo cuaderno</strong><span>Empieza a digitalizar</span></span>
+          <span class="shelf-meta"><strong>Nueva libreta</strong><span>Elige su cuero y sus charms</span></span>
         </button>
       </div>
     </section>`;
+  loadCoverPhotos(app);
+  app.querySelector('[data-theme]').onclick = themeDialog;
+  // Una libreta nueva empieza en el editor: personalizarla es el primer paso.
   app.querySelector('[data-new]').onclick = async () => {
-    const book = await newBookDialog();
-    if (book) location.hash = `#/libro/${book.id}`;
+    const book = {
+      id: db.newId(), title: 'Mi libreta', cover: coverDefaults(), aspect: 0.72, pages: [], createdAt: Date.now(),
+    };
+    await db.saveBook(book);
+    location.hash = `#/libro/${book.id}/portada`;
   };
 }
 
-function newBookDialog() {
-  const state = { palette: PALETTES[2].id, pattern: 'formas' };
+function themeDialog() {
   return modal(`
-    <h2>Nuevo cuaderno</h2>
-    <form method="dialog" class="new-book">
-      <div class="new-preview"></div>
-      <div class="new-fields">
-        <label class="field">Nombre
-          <input name="title" maxlength="60" placeholder="Mi cuaderno" autocomplete="off">
-        </label>
-        <div class="field">Color
-          <div class="swatches">${PALETTES.map((p) =>
-            `<button type="button" class="swatch" data-palette="${p.id}" style="background:${p.bg}" aria-label="Color ${p.id}"></button>`).join('')}</div>
-        </div>
-        <div class="field">Diseño
-          <div class="chips">${PATTERNS.map((p) =>
-            `<button type="button" class="chip" data-pattern="${p.id}">${p.name}</button>`).join('')}</div>
-        </div>
-      </div>
-      <div class="dialog-actions">
-        <button type="button" class="btn ghost" data-no>Cancelar</button>
-        <button class="btn primary" data-create>Crear</button>
-      </div>
-    </form>`, (d, close) => {
-    const input = d.querySelector('input');
-    const preview = () => {
-      d.querySelector('.new-preview').innerHTML = coverHtml({
-        ...state, title: input.value.trim() || 'Mi cuaderno', aspect: 0.72,
-      });
-      d.querySelectorAll('[data-palette]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.palette === state.palette));
-      d.querySelectorAll('[data-pattern]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.pattern === state.pattern));
-    };
-    preview();
-    input.addEventListener('input', preview);
-    d.addEventListener('click', (e) => {
-      const b = e.target.closest('button');
-      if (b?.dataset.palette) { state.palette = b.dataset.palette; preview(); }
-      if (b?.dataset.pattern) { state.pattern = b.dataset.pattern; preview(); }
+    <div class="manage-head">
+      <h2>Fondo de la app</h2>
+      <button class="icon-btn dark" data-close aria-label="Cerrar">${icon('close')}</button>
+    </div>
+    <div class="theme-grid">${THEMES.map((t) => `
+      <button type="button" class="theme-tile" data-theme-id="${t.id}">
+        <span class="theme-chip" style="background:linear-gradient(165deg,${t.bg1},${t.bg2})"><i style="background:${t.accent}"></i></span>
+        <span>${esc(t.name)}</span>
+      </button>`).join('')}</div>`, (d, close) => {
+    d.querySelector('[data-close]').onclick = () => close();
+    d.querySelector('.theme-grid').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-theme-id]');
+      if (b) saveTheme(b.dataset.themeId);
     });
-    d.querySelector('[data-no]').onclick = () => close();
-    d.querySelector('form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const book = {
-        id: db.newId(),
-        title: input.value.trim() || 'Mi cuaderno',
-        ...state,
-        aspect: 0.72,
-        pages: [],
-        createdAt: Date.now(),
-      };
-      await db.saveBook(book);
-      close(book);
-    });
-  }, 'dialog-wide');
+  });
 }
 
 // ---------- Cuaderno ----------
@@ -131,6 +119,7 @@ async function renderBook(id, token) {
           <div class="sub" data-count></div>
         </div>
         <div class="bar-end">
+          <a class="icon-btn" href="#/libro/${book.id}/portada" aria-label="Personalizar la libreta" title="Personalizar la libreta">${icon('brush')}</a>
           <button class="icon-btn" data-act="manage" aria-label="Administrar páginas" title="Administrar páginas">${icon('grid')}</button>
           <button class="icon-btn" data-act="delete" aria-label="Eliminar cuaderno" title="Eliminar cuaderno">${icon('trash')}</button>
         </div>
@@ -324,14 +313,14 @@ function managePages(book, onChange) {
         <figure class="manage-item">
           <button class="manage-thumb" data-view="${i}" aria-label="Ver página ${i + 1}">
             <img src="${urls[i]}" alt="" style="aspect-ratio:${p.w}/${p.h}">
-            ${book.coverPageId === p.id ? '<span class="cover-badge">Portada</span>' : ''}
+            ${book.cover.photoId === p.id ? '<span class="cover-badge">Portada</span>' : ''}
           </button>
           <figcaption>
             <span>${i + 1}</span>
             <span class="mini-actions">
               <button data-move="${i}:-1" aria-label="Mover página ${i + 1} antes" ${i === 0 ? 'disabled' : ''}>${icon('left')}</button>
               <button data-move="${i}:1" aria-label="Mover página ${i + 1} después" ${i === book.pages.length - 1 ? 'disabled' : ''}>${icon('right')}</button>
-              <button data-cover="${i}" aria-label="Usar página ${i + 1} como portada" aria-pressed="${book.coverPageId === p.id}">${icon('star')}</button>
+              <button data-cover="${i}" aria-label="Usar página ${i + 1} como portada" aria-pressed="${book.cover.photoId === p.id}">${icon('star')}</button>
               <button data-del="${i}" aria-label="Eliminar página ${i + 1}">${icon('trash')}</button>
             </span>
           </figcaption>
@@ -356,15 +345,19 @@ function managePages(book, onChange) {
         book.pages.splice(i + dir, 0, p);
         await commit();
       } else if (b.dataset.cover !== undefined) {
-        const id = book.pages[+b.dataset.cover].id;
-        book.coverPageId = book.coverPageId === id ? undefined : id;
+        const id = book.pages[+b.dataset.cover].id, c = book.cover;
+        if (c.photoId && c.photoOwn) await db.deletePage(c.photoId);
+        const removing = c.photoId === id;
+        Object.assign(c, removing
+          ? { photoId: null, photoOwn: false }
+          : { photoId: id, photoOwn: false, photoBlend: 'normal', photoOp: 1 });
         await commit();
       } else if (b.dataset.del !== undefined) {
         const i = +b.dataset.del;
         const ok = await confirmDialog(`¿Eliminar la página ${i + 1}?`, 'No se puede deshacer.', 'Eliminar');
         if (!ok) return;
         const [p] = book.pages.splice(i, 1);
-        if (book.coverPageId === p.id) book.coverPageId = undefined;
+        if (book.cover.photoId === p.id) book.cover.photoId = null;
         await db.deletePage(p.id);
         await commit();
       }
@@ -388,6 +381,7 @@ async function start() {
       await seedDemoBook();
       await db.setMeta('seeded', true);
     }
+    await loadTheme();
     navigator.storage?.persist?.();
   } catch (err) {
     console.error(err);

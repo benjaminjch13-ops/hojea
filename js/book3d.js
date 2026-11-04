@@ -1,5 +1,5 @@
 // Libro 3D con CSS. Todo se deriva de un solo número: `pos`, cuántas hojas se han pasado.
-import { coverImage, coverColor } from './covers.js';
+import { backFaceHTML, bandFill, bandHTML, charmsHTML, coverFaceHTML, leatherLayers } from './cover.js';
 import { getPageUrl } from './db.js';
 import { esc } from './ui.js';
 
@@ -7,18 +7,22 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const REST_RX = 7;
 const IMAGE_WINDOW = 4;
+const DESIGN_WIDTH = 560;
 
 export class Book3D {
-  constructor(stage, { onChange } = {}) {
+  // preview: modo del editor de portada. El arrastre solo gira la libreta y un toque la abre o cierra.
+  constructor(stage, { onChange, preview = false } = {}) {
     this.stage = stage;
     this.onChange = onChange;
+    this.preview = preview;
     this.root = document.createElement('div');
     this.root.className = 'book';
     stage.append(this.root);
 
     this.pos = 0; this.target = 0;
     this.fan = 0; this.fanMode = false;
-    this.rx = REST_RX; this.ry = -10; this.rxT = REST_RX; this.ryT = -10;
+    this.restRy = preview ? -26 : -10;
+    this.rx = REST_RX; this.ry = this.restRy; this.rxT = REST_RX; this.ryT = this.restRy;
     this.zoom = 1; this.zoomT = 1;
     this.vel = 0;
     this.drag = null;
@@ -30,14 +34,14 @@ export class Book3D {
       pointermove: (e) => this.onMove(e),
       pointerup: (e) => this.onUp(e),
       pointercancel: (e) => this.onUp(e),
-      pointerleave: () => { if (!this.drag) this.setOrbit(REST_RX, this.pos === 0 ? -10 : 0); },
+      pointerleave: () => { if (!this.drag && !preview) this.setOrbit(REST_RX, this.pos === 0 ? this.restRy : 0); },
       wheel: (e) => { e.preventDefault(); this.zoomBy(e.deltaY < 0 ? 1.06 : 0.94); },
     };
     for (const [k, fn] of Object.entries(this.handlers)) {
       stage.addEventListener(k, fn, k === 'wheel' ? { passive: false } : undefined);
     }
     this.onKey = (e) => {
-      if (e.target.matches?.('input:not([type=range]), textarea') || document.querySelector('dialog[open], .fullscreen')) return;
+      if (preview || e.target.matches?.('input:not([type=range]), textarea') || document.querySelector('dialog[open], .fullscreen')) return;
       if (e.key === 'ArrowRight') this.next();
       else if (e.key === 'ArrowLeft') this.prev();
     };
@@ -59,33 +63,36 @@ export class Book3D {
   setBook(book) {
     this.book = book;
     const sides = [{ type: 'cover' }, ...book.pages.map((page, i) => ({ type: 'page', page, num: i + 1 }))];
-    if (sides.length % 2 === 0) sides.push({ type: 'blank' });
+    // Sin páginas se muestran hojas en blanco: una libreta vacía también se puede abrir.
+    if (!book.pages.length) sides.push({ type: 'blank' }, { type: 'blank' });
+    else if (sides.length % 2 === 0) sides.push({ type: 'blank' });
     sides.push({ type: 'back' });
     this.sides = sides;
     this.n = sides.length / 2;
-    this.thick = Math.min(0.9, 24 / this.n);
 
-    const color = coverColor(book.palette);
     this.root.innerHTML = `
       <div class="book-floor"></div>
       <div class="edge edge-r"></div><div class="edge edge-l"></div>
       <div class="edge-b edge-br"></div><div class="edge-b edge-bl"></div>
-      <div class="spine" style="background:${color}"></div>`;
+      <div class="spine3d"></div><div class="book-ribbon"></div><div class="strap"></div>`;
     this.floor = this.root.querySelector('.book-floor');
     this.edges = {
       r: this.root.querySelector('.edge-r'), l: this.root.querySelector('.edge-l'),
       br: this.root.querySelector('.edge-br'), bl: this.root.querySelector('.edge-bl'),
     };
-    this.spine = this.root.querySelector('.spine');
+    this.spine = this.root.querySelector('.spine3d');
+    this.strap = this.root.querySelector('.strap');
+    this.ribbon = this.root.querySelector('.book-ribbon');
 
     this.leaves = [];
     for (let i = 0; i < this.n; i++) {
       const el = document.createElement('div');
       el.className = 'leaf';
-      el.innerHTML = this.faceHtml(sides[i * 2], 'front') + this.faceHtml(sides[i * 2 + 1], 'back');
       this.root.append(el);
-      this.leaves.push({ el, shades: el.querySelectorAll('.shade'), imgs: el.querySelectorAll('img[data-id]'), last: '' });
+      this.leaves.push({ el, last: '' });
+      this.paintLeaf(i);
     }
+    this.paintLeather();
     this.pos = clamp(this.pos, 0, this.n);
     this.target = clamp(Math.round(this.target), 0, this.n);
     this.lastInt = null;
@@ -94,22 +101,56 @@ export class Book3D {
     this.emit();
   }
 
-  faceHtml(side, cls) {
-    const shade = '<div class="shade"></div>';
+  paintLeaf(i) {
+    const leaf = this.leaves[i];
+    leaf.el.innerHTML = this.faceHtml(this.sides[i * 2], 'front', i === this.n - 1)
+      + this.faceHtml(this.sides[i * 2 + 1], 'back', i === 0);
+    leaf.shades = leaf.el.querySelectorAll('.shade');
+    leaf.imgs = leaf.el.querySelectorAll('img[data-id]');
+    leaf.last = '';
+  }
+
+  // bound: la hoja va pegada a la tapa, así que se ve el cuero alrededor del papel.
+  faceHtml(side, cls, bound) {
+    const b = this.book, c = b.cover;
     if (side.type === 'cover' || side.type === 'back') {
-      const b = this.book;
-      const cover = b.pages.find((p) => p.id === b.coverPageId);
-      const bg = `background-image:${coverImage(b.palette, side.type === 'back' ? 'liso' : b.pattern)}`;
-      const photo = side.type === 'cover' && cover ? `<img class="cover-photo" data-id="${cover.id}" alt="" draggable="false">` : '';
-      const label = side.type === 'cover'
-        ? `<div class="cover-label">${esc(b.title)}</div>`
-        : '<div class="back-mark">Hojea</div>';
-      return `<div class="face ${cls} cover-face" style="${bg}">${photo}${label}${shade}</div>`;
+      const html = side.type === 'cover' ? coverFaceHTML(b) : backFaceHTML(b);
+      return `<div class="face ${cls} lea" style="background-color:${c.color}">${html}<div class="shade"></div></div>`;
     }
     const inner = side.type === 'page'
       ? `<img data-id="${side.page.id}" alt="Página ${side.num}" draggable="false">`
       : '';
-    return `<div class="face ${cls} paper">${inner}<div class="gutter"></div>${shade}</div>`;
+    const sheet = `<div class="sheet">${inner}<div class="gutter"></div><div class="shade"></div></div>`;
+    return bound
+      ? `<div class="face ${cls} lea-inside" style="background-color:${c.color}">${leatherLayers(c)}${sheet}</div>`
+      : `<div class="face ${cls}">${sheet}</div>`;
+  }
+
+  // Todo lo que muestra el cuero, sin tocar las páginas del medio.
+  paintLeather() {
+    const b = this.book, c = b.cover, e = c.elastic;
+    this.strap.innerHTML = bandHTML(c) + charmsHTML(c);
+    const firstLine = c.title.show ? b.title : '';
+    this.spine.style.backgroundColor = c.color;
+    this.spine.innerHTML = `${leatherLayers(c)}${firstLine ? `<span class="spine-title" style="font-family:${c.title.font.replace(/"/g, "'")}">${esc(firstLine)}</span>` : ''}`;
+    const horizontal = e.orient === 'horizontal';
+    const u = (n) => `calc(var(--u) * ${n})`;
+    const strip = (el, css) => { el.innerHTML = `<i class="edge-band" style="${css};background:${bandFill(e, horizontal)}"></i>`; };
+    const across = `left:0;right:0;top:calc(${e.pos * 100}% - ${u(e.width)} / 2);height:${u(e.width)}`;
+    const along = `top:0;bottom:0;left:calc(${e.pos * 100}% - ${u(e.width)} / 2);width:${u(e.width)}`;
+    if (horizontal) { strip(this.edges.r, across); this.edges.br.innerHTML = ''; }
+    else { strip(this.edges.br, along); this.edges.r.innerHTML = ''; }
+    this.ribbon.style.display = c.ribbon === 'none' ? 'none' : '';
+    this.ribbon.style.background = c.ribbon && c.ribbon !== 'none' ? c.ribbon : '#b5646d';
+  }
+
+  // Actualiza la portada al instante mientras se edita.
+  refreshCover() {
+    this.paintLeaf(0);
+    if (this.n > 1) this.paintLeaf(this.n - 1);
+    this.paintLeather();
+    this.loadImages(Math.round(this.pos));
+    this.render(true);
   }
 
   layout() {
@@ -119,11 +160,15 @@ export class Book3D {
     const aspect = this.book.aspect || 0.72;
     let h = height * 0.84;
     let w = h * aspect;
-    const maxW = width * 0.46;
+    const maxW = width * (this.preview ? 0.62 : 0.46);
     if (w > maxW) { w = maxW; h = w / aspect; }
     this.w = w; this.h = h;
+    this.u = w / DESIGN_WIDTH;
+    // Grosor de libreta real: crece con las páginas, con un mínimo y un máximo.
+    this.thick = (clamp(26 + this.n * 3.2, 30, 62) * this.u) / this.n;
     this.root.style.setProperty('--w', `${w}px`);
     this.root.style.setProperty('--h', `${h}px`);
+    this.root.style.setProperty('--u', `${this.u}px`);
     this.render(true);
   }
 
@@ -153,7 +198,7 @@ export class Book3D {
   // ---- Punteros ----
   onDown(e) {
     if (e.button) return;
-    const onBook = e.target.closest?.('.leaf');
+    const onBook = !this.preview && e.target.closest?.('.leaf');
     this.drag = {
       id: e.pointerId, mode: onBook ? 'flip' : 'orbit',
       x: e.clientX, y: e.clientY, startPos: this.pos, rx: this.rxT, ry: this.ryT,
@@ -168,11 +213,11 @@ export class Book3D {
     const d = this.drag;
     if (!d) {
       // Inclinación suave siguiendo el mouse.
-      if (e.pointerType === 'mouse' && !this.reduced) {
+      if (e.pointerType === 'mouse' && !this.reduced && !this.preview) {
         const r = this.stage.getBoundingClientRect();
         const nx = (e.clientX - r.left) / r.width - 0.5;
         const ny = (e.clientY - r.top) / r.height - 0.5;
-        this.setOrbit(REST_RX - ny * 7, nx * 12 + (this.pos < 0.5 ? -10 : 0));
+        this.setOrbit(REST_RX - ny * 7, nx * 12 + (this.pos < 0.5 ? this.restRy : 0));
       }
       return;
     }
@@ -188,7 +233,8 @@ export class Book3D {
       this.pos = this.target = clamp(d.startPos - dx / (this.w * 1.15), 0, this.n);
     } else {
       this.rxT = clamp(d.rx - dy * 0.3, -35, 45);
-      this.ryT = clamp(d.ry + dx * 0.4, -60, 60);
+      const limit = this.preview ? 200 : 60;
+      this.ryT = clamp(d.ry + dx * 0.4, -limit, limit);
     }
     this.wake();
   }
@@ -209,8 +255,10 @@ export class Book3D {
         const r = this.stage.getBoundingClientRect();
         if (e.clientX > r.left + r.width / 2) this.next(); else this.prev();
       }
-    } else {
-      this.setOrbit(REST_RX, this.target === 0 ? -10 : 0);
+    } else if (!this.preview) {
+      this.setOrbit(REST_RX, this.target === 0 ? this.restRy : 0);
+    } else if (!d.moved && e.target.closest?.('.leaf, .strap')) {
+      this.goTo(this.target ? 0 : 1);
     }
     this.vel = 0;
     this.wake();
@@ -237,18 +285,22 @@ export class Book3D {
       : dragging ? clamp(Math.abs(this.vel) * 0.45, 0, 1)
       : Math.abs(this.target - this.pos) > 1.2 ? 0.6 : 0;
     this.fan += (fanT - this.fan) * ease(6);
+    const prevRy = this.ry;
     this.rx += (this.rxT - this.rx) * ease(8);
     this.ry += (this.ryT - this.ry) * ease(8);
     this.zoom += (this.zoomT - this.zoom) * ease(10);
+    // El charm cuelga: se balancea cuando la libreta gira.
+    this.swing = lerp(this.swing ?? 0, clamp((this.ry - prevRy) * 2.4, -16, 16), ease(5));
 
     const settled = !this.drag
       && Math.abs(this.target - this.pos) < 0.0015
       && Math.abs(fanT - this.fan) < 0.002
       && Math.abs(this.rxT - this.rx) < 0.02
       && Math.abs(this.ryT - this.ry) < 0.02
-      && Math.abs(this.zoomT - this.zoom) < 0.001;
+      && Math.abs(this.zoomT - this.zoom) < 0.001
+      && Math.abs(this.swing) < 0.05;
     if (settled) {
-      this.pos = this.target; this.fan = fanT;
+      this.pos = this.target; this.fan = fanT; this.swing = 0;
       this.rx = this.rxT; this.ry = this.ryT; this.zoom = this.zoomT;
     }
     this.render();
@@ -280,12 +332,25 @@ export class Book3D {
     // En abanico las hojas ya no forman un bloque, así que el canto desaparece.
     const solid = 1 - this.fan;
     const zR = (n - pos) * t * solid, zL = pos * t * solid;
-    const flat = (el, base) => { el.style.transform = base; };
-    flat(this.edges.r, `translateZ(${zR.toFixed(2)}px) rotateY(90deg) scaleX(${zR.toFixed(2)})`);
-    flat(this.edges.l, `rotateY(-90deg) scaleX(${zL.toFixed(2)})`);
-    flat(this.edges.br, `rotateX(90deg) scaleY(${zR.toFixed(2)})`);
-    flat(this.edges.bl, `rotateX(90deg) scaleY(${zL.toFixed(2)})`);
-    flat(this.spine, `rotateY(-90deg) scaleX(${(n * t).toFixed(2)})`);
+    const flat = (el, thickness, transform) => {
+      el.style.setProperty('--t', `${Math.max(0, thickness).toFixed(2)}px`);
+      el.style.transform = transform;
+    };
+    flat(this.edges.r, zR, `translateZ(${zR.toFixed(2)}px) rotateY(90deg)`);
+    flat(this.edges.l, zL, 'rotateY(-90deg)');
+    flat(this.edges.br, zR, 'rotateX(90deg)');
+    flat(this.edges.bl, zL, 'rotateX(90deg)');
+    flat(this.spine, n * t, 'rotateY(-90deg)');
+
+    // El elástico se suelta al abrir: se desliza fuera de la tapa y desaparece.
+    const release = clamp(pos * 3.2, 0, 1);
+    const closedZ = n * t + 0.5;
+    this.strap.style.opacity = (1 - release).toFixed(3);
+    this.strap.style.visibility = release >= 1 ? 'hidden' : 'visible';
+    this.strap.style.transform = `translateZ(${closedZ.toFixed(2)}px) translateX(${(release * w * 0.22).toFixed(2)}px)`;
+    this.strap.style.setProperty('--swing', `${(this.swing ?? 0).toFixed(2)}deg`);
+    this.root.style.setProperty('--strap-edge', (1 - release).toFixed(3));
+
     const left = -w * Math.min(pos, 1), right = w * Math.min(n - pos, 1);
     this.floor.style.left = `${left}px`;
     this.floor.style.width = `${Math.max(w, right - left)}px`;

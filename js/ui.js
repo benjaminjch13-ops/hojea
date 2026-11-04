@@ -18,6 +18,8 @@ const PATHS = {
   left: '<path d="M14 6l-6 6 6 6"/>',
   right: '<path d="M10 6l6 6-6 6"/>',
   star: '<path d="M12 4l2.5 5.2 5.7.8-4.1 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.1-4 5.7-.8z"/>',
+  brush: '<path d="M20 4c-5 1-9 5-11 9l2 2c4-2 8-6 9-11zM9 14c-3 0-4 2-4 4 0 1-1 2-2 2 2 1 7 1 8-3z"/>',
+  palette: '<path d="M12 4a8 8 0 100 16c1.5 0 2-1 2-2s-1-2 0-3 2-1 3-1h1a2 2 0 002-2c0-4.5-3.6-8-8-8z"/><circle cx="8" cy="11" r="1"/><circle cx="11" cy="8" r="1"/><circle cx="15" cy="8.5" r="1"/>',
 };
 
 export const icon = (name) =>

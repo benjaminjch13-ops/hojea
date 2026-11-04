@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node serve.mjs",
     "lan": "node serve.mjs --lan",
-    "test": "node --test tests/imaging.test.mjs",
+    "test": "node --test tests/imaging.test.mjs tests/cover.test.mjs",
     "icons": "node tools/make-icons.mjs"
   }
 }

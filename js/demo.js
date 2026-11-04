@@ -1,4 +1,5 @@
 // Cuaderno de ejemplo con bocetos generados, para que la app no se vea vacía la primera vez.
+import { coverDefaults } from './cover.js';
 import { addPage, newId, saveBook } from './db.js';
 
 const W = 900, H = 1200;
@@ -154,8 +155,7 @@ export async function seedDemoBook() {
   await saveBook({
     id: newId(),
     title: 'Sketchbook',
-    palette: 'noche',
-    pattern: 'flores',
+    cover: coverDefaults(),
     aspect: W / H,
     pages,
     createdAt: Date.now(),

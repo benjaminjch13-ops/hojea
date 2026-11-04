@@ -1,4 +1,6 @@
 // Almacenamiento local en IndexedDB. Las fotos se guardan como Blob, nunca salen del dispositivo.
+import { migrateBook } from './cover.js';
+
 const DB_NAME = 'hojea';
 const DB_VERSION = 1;
 let dbPromise = null;
@@ -35,9 +37,9 @@ export const newId = () => crypto.randomUUID();
 
 export async function listBooks() {
   const books = await run('books', 'readonly', (s) => s.getAll());
-  return books.sort((a, b) => b.createdAt - a.createdAt);
+  return books.map(migrateBook).sort((a, b) => b.createdAt - a.createdAt);
 }
-export const getBook = (id) => run('books', 'readonly', (s) => s.get(id));
+export const getBook = async (id) => migrateBook(await run('books', 'readonly', (s) => s.get(id)));
 export const saveBook = (book) => run('books', 'readwrite', (s) => s.put(book));
 
 export async function addPage(blob, w, h) {
@@ -60,6 +62,7 @@ export async function deletePage(id) {
 
 export async function deleteBook(book) {
   await Promise.all(book.pages.map((p) => deletePage(p.id)));
+  if (book.cover?.photoId && book.cover.photoOwn) await deletePage(book.cover.photoId);
   await run('books', 'readwrite', (s) => s.delete(book.id));
 }
 
