@@ -525,12 +525,15 @@ dialog.lightbox {
 .vaq-card, .detail-card, .reveal-card { display: block; width: 100%; height: auto; border-radius: 16px; }
 .vaq-card.is-locked, .reveal-card.is-locked { background: rgba(121, 100, 93, .12); }
 .vaq-shadow { filter: brightness(0); opacity: .22; }
+.vaq-card *, .vaq-mini * { animation: none !important; }
 .collection { max-width: 1080px; height: 100dvh; margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) 16px 48px; overflow-y: auto; }
 .collection-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .collection-title { flex: 1; min-width: 0; }
 .collection-title h1 { margin: 0; font: 500 clamp(28px, 5vw, 42px)/1.1 var(--serif); }
 .collection-title p { margin: 2px 0 0; color: var(--ink-soft); font-size: 14px; }
-.vaq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 14px; margin-bottom: 32px; }
+.series-title { display: flex; align-items: baseline; gap: 10px; margin: 0 0 12px; font: 500 22px/1.2 var(--serif); }
+.series-title span { font: 400 14px/1 inherit; color: var(--ink-soft); font-family: inherit; }
+.vaq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 14px; margin-bottom: 28px; content-visibility: auto; contain-intrinsic-size: auto 600px; }
 .vaq-tile { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); text-align: center; font-size: 12px; }
 .vaq-tile strong { margin-top: 5px; font: 500 15px/1.2 var(--serif); }
 .vaq-tile span { color: var(--ink-soft); }

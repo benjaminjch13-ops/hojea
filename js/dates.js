@@ -23,12 +23,13 @@ export async function listDates() {
 export const dateForPage = async (pageId) => (await listDates()).find((d) => d.pageId === pageId) ?? null;
 
 // Decide qué vaquita ganará la cita, antes de guardarla, para poder pegarla en su página.
-export async function chooseVaquita({ date, place, ideaSrc }) {
+export async function chooseVaquita({ date, title, place, ideaSrc }) {
   const dates = await listDates();
   return nextVaquita({
     taken: dates.map((d) => d.cow).filter(Boolean),
     total: dates.length + 1,
     date,
+    title,
     place,
     ideaSrc,
     togetherSince: await getMeta('togetherSince'),

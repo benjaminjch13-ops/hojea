@@ -1,36 +1,8 @@
-// La colección: 20 vaquitas temáticas con su escena, y la regla que decide cuál gana cada cita.
+// La colección: 100 vaquitas temáticas con su escena, y la regla que decide cuál gana cada cita.
 // Las escenas usan un lienzo de 120×120; los accesorios, las coordenadas de la cara de Muu (100×92).
 import { MUU_COLORS, MUU_PINK, fluffyHead, sittingFigure } from './cow.js';
-
-const rect = (x, y, w, h, fill, extra = '') => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${extra}/>`;
-const circle = (cx, cy, r, fill, extra = '') => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" ${extra}/>`;
-const path = (d, fill, extra = '') => `<path d="${d}" fill="${fill}" ${extra}/>`;
-const line = (d, stroke, width = 2) => `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
-const dots = (list, fill, r = 1) => list.map(([x, y, size]) => circle(x, y, size ?? r, fill)).join('');
-const heart = (x, y, s, fill) => path(`M${x} ${y + s * 0.9}C${x - s * 1.5} ${y - s * 0.1} ${x - s * 0.7} ${y - s} ${x} ${y - s * 0.25}C${x + s * 0.7} ${y - s} ${x + s * 1.5} ${y - s * 0.1} ${x} ${y + s * 0.9}Z`, fill);
-const star = (x, y, r, fill) => {
-  const points = Array.from({ length: 10 }, (_, i) => {
-    const a = (i * Math.PI) / 5 - Math.PI / 2;
-    const k = i % 2 ? r * 0.45 : r;
-    return `${(x + Math.cos(a) * k).toFixed(1)},${(y + Math.sin(a) * k).toFixed(1)}`;
-  });
-  return `<polygon points="${points.join(' ')}" fill="${fill}"/>`;
-};
-const daisy = (x, y, r, petals = '#fff', center = '#F6C445') => {
-  const leaves = Array.from({ length: 6 }, (_, i) => {
-    const a = (i * Math.PI) / 3;
-    return circle((x + Math.cos(a) * r).toFixed(1), (y + Math.sin(a) * r).toFixed(1), r * 0.7, petals);
-  }).join('');
-  return leaves + circle(x, y, r * 0.65, center);
-};
-const glasses = (frame, lens, width = 2.5) => `
-  <circle cx="37" cy="56" r="9" fill="${lens}" stroke="${frame}" stroke-width="${width}"/>
-  <circle cx="63" cy="56" r="9" fill="${lens}" stroke="${frame}" stroke-width="${width}"/>
-  ${line('M46 56h8', frame, width)}`;
-const sunglasses = (frame = '#1f1a1c') => `
-  ${path('M25 50h22c2 0 3 2 2 5-1 6-5 9-12 9s-12-4-13-10c0-2 0-4 1-4zM75 50H53c-2 0-3 2-2 5 1 6 5 9 12 9s12-4 13-10c0-2 0-4-1-4z', frame)}
-  ${line('M47 53h6', frame, 2.5)}
-  ${line('M29 54l6-1M57 54l6-1', '#ffffff', 1.5)}`;
+import { circle, daisy, dots, glasses, heart, line, path, rect, star, sunglasses } from './vaquita-art.js';
+import { MORE_VAQUITAS } from './vaquitas-series.js';
 
 const HOLSTEIN = {
   colors: { dark: '#3a2c27', muzzle: '#f6c6cf', muzzleTop: '#fbdde2', feature: '#a5606f' },
@@ -236,8 +208,202 @@ export const VAQUITAS = [
       ${circle(40, 16, 2.5, '#D7263D')}${circle(50, 18, 3, '#4FB3D9')}${circle(60, 16, 2.5, '#D7263D')}
       ${dots([[34, 92], [42, 95], [50, 96], [58, 95], [66, 92]], '#2A2430', 1.2)}`,
   },
+
+  // Viajeras: una por país, de los más visitados y conocidos. `places` son palabras que la ganan si aparecen en el lugar de la cita.
+  {
+    id: 'francia', name: 'Muu Parisina', theme: 'París, Francia', fur: '#b8703a', places: ['francia', 'paris'],
+    bg: `${rect(0, 0, 120, 120, '#CDE7F5')}${path('M10 26c7-6 17-6 24 0zM44 12c6-4 14-4 20 0z', '#fff')}
+      ${path('M104 8l2 2 2 22 4 28 7 40h-9c-1-9-3-14-6-14s-5 5-6 14h-9l7-40 4-28 2-22z', '#6B5E57')}${rect(97, 44, 14, 3, '#4F443E')}${rect(94, 66, 20, 3, '#4F443E')}
+      ${path('M0 120v-20c40-5 80-5 120 0v20z', '#8CC56B')}`,
+    acc: `${path('M18 27C20 8 80 3 86 24 70 35 32 37 18 27z', '#2A2430')}${line('M54 8l1-6', '#2A2430', 3)}
+      ${line('M84 102L96 70', '#D9A45B', 7)}${line('M86 94l5-2M89 86l5-2M92 78l4-2', '#A87432', 1.2)}`,
+  },
+  {
+    id: 'espana', name: 'Muu Flamenca', theme: 'Barcelona, España', fur: '#4d3a33', places: ['espana', 'madrid', 'barcelona', 'sevilla'],
+    bg: `${rect(0, 0, 120, 120, '#FFE3B3')}${circle(102, 22, 11, '#FFC233')}
+      ${path('M2 100V40l4-24 4 24v14h4V30l4-22 4 22v70z', '#C9A06F')}${dots([[6, 44], [6, 54], [6, 64], [18, 36], [18, 48], [18, 60]], '#8A5A33', 1.4)}
+      ${path('M96 100V66c0-10 18-10 18 0v34z', '#E8B87A')}${path('M100 100V74c0-6 10-6 10 0v26z', '#A87432')}
+      ${rect(0, 100, 120, 20, '#D98E4A')}`,
+    acc: `${[0, 1, 2, 3, 4].map((i) => { const a = (i * 2 * Math.PI) / 5; return circle((22 + Math.cos(a) * 6).toFixed(1), (28 + Math.sin(a) * 6).toFixed(1), 5, '#D7263D'); }).join('')}${circle(22, 28, 2.5, '#FFD23F')}
+      ${path('M78 96L60 78c6-9 26-14 38-8z', '#D7263D')}${line('M78 96L66 80M78 96l-4-21M78 96l8-23M78 96l16-24', '#8F1426', 1)}`,
+  },
+  {
+    id: 'usa', name: 'Muu Libertad', theme: 'Nueva York, Estados Unidos', fur: '#7CC7AF', places: ['estados unidos', 'usa', 'nueva york', 'new york', 'miami', 'california'],
+    bg: `${rect(0, 0, 120, 120, '#BFE3F5')}${path('M90 74V42h8v-8h6v8h6v14h10v18zM0 74V54h10v-8h8v28z', '#7A8BA0')}
+      ${dots([[93, 48], [93, 56], [93, 64], [106, 48], [106, 58], [4, 60], [12, 54], [12, 64]], '#FFE27A', 1)}
+      ${rect(0, 74, 120, 46, '#3E8FB0')}${line('M0 86q10-5 20 0t20 0 20 0 20 0 20 0 20 0M0 104q10-5 20 0t20 0 20 0 20 0 20 0 20 0', '#8FCFE3', 2)}`,
+    acc: `${[14, 30, 50, 70, 86].map((x, i) => path(`M${x - 5} 28L${x + (x - 50) * 0.16} ${i === 2 ? -12 : -4}L${x + 5} 28z`, '#5FAE96')).join('')}${path('M16 24c20-7 48-7 68 0v8c-20-6-48-6-68 0z', '#4E9A82')}
+      ${rect(90, 54, 5, 34, '#4E9A82')}${path('M86 50h13l-3 6h-7z', '#4E9A82')}${path('M92 34c5 5 6 9 1 16-5-6-5-11-1-16z', '#FFC233')}`,
+  },
+  {
+    id: 'italia', name: 'Muu Gondolera', theme: 'Roma y Venecia, Italia', fur: '#dcb074', places: ['italia', 'roma', 'venecia', 'florencia', 'milan'],
+    bg: `${rect(0, 0, 120, 120, '#BFE6F2')}
+      ${path('M0 86V36c10-8 22-10 30-10v60zM90 26c10 0 20 2 30 10v50z', '#D9B382')}
+      ${[4, 14, 24, 94, 104, 114].flatMap((x) => [path(`M${x - 3} 52c0-6 6-6 6 0v8h-6z`, '#8A6A45'), path(`M${x - 3} 72c0-6 6-6 6 0v10h-6z`, '#8A6A45')]).join('')}
+      ${rect(0, 86, 120, 34, '#3AA0A8')}${line('M0 100q10-5 20 0t20 0 20 0 20 0 20 0 20 0', '#A3E0E0', 2)}`,
+    acc: `${path('M26 24c0-14 48-14 48 0z', '#F3D88C')}${rect(26, 19, 48, 6, '#D7263D')}${path('M8 26c18 7 66 7 84 0-6 9-22 12-42 12S14 35 8 26z', '#E9C970')}
+      ${path('M78 90l18-6-6 22z', '#F2C14E')}${circle(86, 91, 2, '#D7263D')}${circle(90, 97, 1.8, '#D7263D')}${path('M77 89l20-7 1 3-20 7z', '#B8743A')}`,
+  },
+  {
+    id: 'turquia', name: 'Muu Globera', theme: 'Capadocia, Turquía', fur: '#c78a52', places: ['turquia', 'estambul', 'capadocia'],
+    bg: `${rect(0, 0, 120, 120, '#FAD4C0')}${rect(0, 0, 120, 30, '#F7B8A8')}
+      ${circle(16, 24, 11, '#E4572E')}${path('M9 32l4 9h6l4-9z', '#E4572E')}${rect(13, 42, 6, 4, '#8A5A33')}
+      ${circle(102, 18, 13, '#4FB3D9')}${path('M94 28l4 10h8l4-10z', '#4FB3D9')}${rect(98, 39, 8, 4, '#8A5A33')}
+      ${circle(84, 46, 6, '#F2C14E')}${rect(82, 54, 4, 3, '#8A5A33')}
+      ${path('M0 120V84c2-14 6-14 8-2 2-8 6-8 8 2l4 36zM96 120l4-40c2-12 6-12 8 0 2-8 6-8 8 0l4 40z', '#D9A577')}${rect(0, 104, 120, 16, '#C98A5A')}`,
+    acc: `${path('M23 30C21 6 79 6 77 30z', '#7A4A2B')}${rect(21, 24, 58, 6, '#5C3620', 'rx="2"')}
+      ${circle(38, 22, 7, '#BFEFFF', 'stroke="#3A2C27" stroke-width="2.500"')}${circle(62, 22, 7, '#BFEFFF', 'stroke="#3A2C27" stroke-width="2.500"')}
+      ${circle(50, 96, 6, '#2B59C3')}${circle(50, 96, 4, '#fff')}${circle(50, 96, 2.5, '#6FD6FF')}${circle(50, 96, 1, '#1F1A1C')}`,
+  },
+  {
+    id: 'mexico', name: 'Muu Mexicana', theme: 'Chichén Itzá, México', fur: '#9a4f2c', places: ['mexico', 'cancun', 'chichen', 'oaxaca'],
+    bg: `${rect(0, 0, 120, 120, '#AEE5F2')}
+      ${line('M0 8c30 6 90 6 120 0', '#8A5A33', 1)}${['#F2577F', '#FFD23F', '#3F9142', '#2B59C3', '#E4572E', '#8E5BC4', '#F2577F'].map((c, i) => rect(4 + i * 17, 9 + (i > 0 && i < 6 ? 2 : 0), 13, 13, c)).join('')}
+      ${path('M0 94V76h6v-9h6v-9h6v-8h6v8h6v9h6v9h6v18z', '#B5AB94')}${rect(16, 52, 4, 42, '#8E856F')}
+      ${path('M108 100V74c0-6 8-6 8 0v26zM102 88v-8c0-3 4-3 4 0v5h3v5h-5c-1 0-2-1-2-2z', '#4F8A4C')}
+      ${rect(0, 94, 120, 26, '#D9B56E')}`,
+    acc: `${path('M28 24C28 2 72 2 72 24z', '#D7263D')}${path('M27 20c15 4 31 4 46 0v5c-15 4-31 4-46 0z', '#F2C14E')}
+      ${path('M-6 24c18 12 94 12 112 0-6 15-30 20-56 20S0 39-6 24z', '#E4572E')}${line('M4 32c26 8 66 8 92 0', '#FFD23F', 2)}
+      ${[34, 42, 50, 58, 66].map((x, i) => daisy(x, i % 2 ? 95 : 92, 2.4, ['#F2577F', '#FFD23F', '#4FB3D9', '#FFD23F', '#F2577F'][i], '#fff')).join('')}`,
+  },
+  {
+    id: 'reino-unido', name: 'Muu Londinense', theme: 'Londres, Reino Unido', fur: '#a7a09a', places: ['reino unido', 'londres', 'inglaterra', 'escocia'],
+    bg: `${rect(0, 0, 120, 120, '#C9D6E2')}${path('M4 26c8-7 20-7 28 0zM50 16c8-6 18-6 26 0z', '#EEF2F5')}
+      ${path('M98 100V34l6-18 6 18v66z', '#C9A06F')}${circle(104, 44, 6, '#FFF8EF', 'stroke="#6B4226" stroke-width="1.500"')}${line('M104 44v-4M104 44l3 1', '#2A2430', 1)}
+      ${rect(4, 62, 20, 38, '#D7263D', 'rx="2"')}${rect(7, 67, 14, 14, '#BFE3F5')}${line('M14 67v14M7 74h14', '#D7263D', 1.5)}${rect(7, 84, 14, 12, '#A81D2F')}
+      ${rect(0, 100, 120, 20, '#8E9AA6')}`,
+    acc: `${path('M24 34C10 2 28-30 50-30s40 32 26 64c-16-5-36-5-52 0z', '#1F1A1C')}${line('M28 32C40 28 60 28 72 32', '#F2C14E', 2)}
+      ${line('M22 40c10 40 46 40 56 0', '#F2C14E', 1.4)}
+      ${dots([[50, 99], [50, 107], [50, 115]], '#F2C14E', 1.8)}`,
+  },
+  {
+    id: 'alemania', name: 'Muu Bávara', theme: 'Baviera, Alemania', fur: '#b8703a', places: ['alemania', 'berlin', 'munich', 'baviera'],
+    bg: `${rect(0, 0, 120, 120, '#D5EEF7')}
+      ${path('M86 76V44l3-10 3 10v-8l4-14 4 14v10l3-10 3 10v30h6v10H84V76z', '#F4EFE6')}${path('M86 44l3-10 3 10zM92 36l4-14 4 14zM100 46l3-10 3 10z', '#4F6D9E')}${dots([[96, 48], [96, 58], [103, 54]], '#6B5E57', 1.5)}
+      ${path('M60 90c16-22 44-24 60-12v14z', '#4F8A4C')}
+      ${path('M2 88l9-26 9 26zM14 92l8-22 8 22z', '#2F6F4A')}
+      ${path('M0 120V90c40-6 80-6 120 0v30z', '#6FA85A')}`,
+    acc: `${path('M24 28C22 6 78 6 76 28z', '#3F6B4A')}${path('M12 27c18 7 58 7 76 0-5 8-20 11-38 11s-33-3-38-11z', '#2F5539')}${rect(24, 22, 52, 4, '#E8D9B8')}
+      ${path('M76 18c2-12 10-18 16-20-2 9-6 16-12 22z', '#4FB3D9')}
+      ${line('M86 80c-8-4-12 8-4 10 5 1 8-4 5-7M86 80c8-4 12 8 4 10-5 1-8-4-5-7', '#B8743A', 3.5)}
+      ${line('M34 90L40 120M66 90l-6 30', '#3F6B4A', 4)}`,
+  },
+  {
+    id: 'grecia', name: 'Muu Griega', theme: 'Santorini, Grecia', fur: '#efe7da', places: ['grecia', 'atenas', 'santorini'],
+    bg: `${rect(0, 0, 120, 120, '#9ADCF5')}${rect(0, 60, 120, 60, '#2C8FC2')}${circle(100, 22, 9, '#FFE27A')}
+      ${path('M0 120V64h16V52c0-10 16-10 16 0v30h-4v38z', '#FFFFFF')}${path('M16 52c0-10 16-10 16 0z', '#2B6FB3')}${rect(4, 74, 6, 9, '#2B6FB3', 'rx="3"')}
+      ${path('M120 120V58h-12V50c0-8-14-8-14 0v22h-4v48z', '#FFFFFF')}${path('M94 50c0-8 14-8 14 0z', '#2B6FB3')}${rect(108, 72, 6, 9, '#2B6FB3', 'rx="3"')}`,
+    acc: `${[18, 28, 38, 62, 72, 82].map((x, i) => path(`M${x} ${i < 3 ? 28 - i * 4 : 20 + (i - 3) * 4}c3-6 8-6 10-2-3 5-7 6-10 2z`, '#6FA85A')).join('')}${line('M18 30C30 16 70 16 82 30', '#C9971F', 2)}
+      ${line('M34 90L66 120', '#2B6FB3', 4)}`,
+  },
+  {
+    id: 'austria', name: 'Muu Vienesa', theme: 'Viena, Austria', fur: '#4d3a33', places: ['austria', 'viena', 'salzburgo'],
+    bg: `${rect(0, 0, 120, 120, '#F7E6B8')}
+      ${rect(0, 40, 120, 60, '#F2C14E')}${path('M0 40l30-14h60l30 14z', '#5FA8A0')}
+      ${[6, 26, 86, 106].map((x) => path(`M${x} 88V60c0-8 8-8 8 0v28z`, '#FFF8EF')).join('')}
+      ${rect(0, 100, 120, 20, '#8CC56B')}
+      ${line('M20 16v9M20 16l5-2', '#3A2C27', 1.6)}${circle(18, 25, 2.2, '#3A2C27')}${line('M100 10v9M100 10l5 2v9', '#3A2C27', 1.6)}${circle(98, 19, 2.2, '#3A2C27')}${circle(103, 21, 2.2, '#3A2C27')}`,
+    acc: `${path('M41 88l9 8 9-8-4-3-5 3-5-3z', '#FFFFFF')}${path('M44 90l6 3 6-3-2 5-4-1-4 1z', '#D7263D')}
+      ${path('M72 74c8-5 14-2 15 4s-3 9-3 12 5 5 3 11-11 8-17 2-4-13-1-15 3-4 3-14z', '#A85C2A')}${line('M76 72L92 44', '#3A2C27', 2.5)}${line('M92 56L64 110', '#E9C970', 1.3)}`,
+  },
+  {
+    id: 'japon', name: 'Muu Japonesa', theme: 'Monte Fuji, Japón', fur: '#efe7da', places: ['japon', 'tokio', 'kioto', 'osaka'],
+    bg: `${rect(0, 0, 120, 120, '#FDE8EE')}
+      ${path('M60 92l44-58c4-5 8-5 12 0l24 58z', '#7E9CC4')}${path('M100 40c4-6 12-6 16 0l6 8-6-2-5 4-5-4-6 3z', '#fff')}
+      ${path('M4 96V48M30 96V48', '#D7263D', 'stroke="#D7263D" stroke-width="5"')}${path('M-2 42c10 3 28 3 38 0v6H-2z', '#D7263D')}${rect(0, 54, 34, 4, '#D7263D')}
+      ${[[50, 12], [62, 8], [74, 14], [40, 8], [88, 8]].map(([x, y]) => daisy(x, y, 3, '#F9B7CB', '#fff')).join('')}${line('M30 4C50 14 76 16 96 2', '#7A4A2B', 2)}
+      ${rect(0, 96, 120, 24, '#A6C98A')}`,
+    acc: `${daisy(22, 24, 4, '#F2577F', '#FFE27A')}${line('M26 28l10 8', '#C9971F', 2)}${circle(37, 37, 1.8, '#C9971F')}
+      ${path('M38 86l12 14 12-14 4 3-16 17-16-17z', '#FFF8EF')}
+      ${rect(26, 106, 48, 10, '#F2C14E')}
+      ${path('M80 100L66 84c5-6 19-9 27-5z', '#2B59C3')}${line('M80 100L72 82M80 100l1-21M80 100l9-20', '#FFF8EF', 1)}`,
+  },
+  {
+    id: 'tailandia', name: 'Muu Tailandesa', theme: 'Bangkok, Tailandia', fur: '#c78a52', places: ['tailandia', 'bangkok', 'phuket'],
+    bg: `${rect(0, 0, 120, 120, '#FFD8A8')}${circle(60, 18, 13, '#FFB347')}
+      ${[[12, 90, 14], [100, 90, 16]].map(([x, base, w]) => `${path(`M${x - w} ${base}c8-6 8-16 ${w - 3}-40l3-22 3 22c${w - 8} 24 ${w - 8} 34 ${w - 3} 40z`, '#F2C14E')}${rect(x - w, base - 6, w * 2, 3, '#D7263D')}${rect(x - w + 4, base - 16, w * 2 - 8, 3, '#D7263D')}`).join('')}
+      ${rect(0, 90, 120, 30, '#3AA0A8')}${line('M0 102q10-4 20 0t20 0 20 0 20 0 20 0 20 0', '#A3E0E0', 2)}`,
+    acc: `${[0, 1, 2, 3, 4].map((i) => { const a = (i * 2 * Math.PI) / 5; return circle((78 + Math.cos(a) * 6).toFixed(1), (28 + Math.sin(a) * 6).toFixed(1), 4.5, '#B86FD6'); }).join('')}${circle(78, 28, 2.4, '#FFE27A')}
+      ${[32, 40, 50, 60, 68].map((x, i) => circle(x, i === 2 ? 98 : i % 4 ? 96 : 92, 3.2, '#FFF8EF')).join('')}${path('M47 100h6l2 12-5-3-5 3z', '#E4572E')}`,
+  },
+  {
+    id: 'china', name: 'Muu China', theme: 'Gran Muralla, China', fur: '#a7a09a', places: ['china', 'pekin', 'beijing', 'shanghai'],
+    bg: `${rect(0, 0, 120, 120, '#DDEFF0')}
+      ${path('M0 86c14-30 28-40 42-30 12 8 30 2 44-14 10-10 24-12 34-8v86H0z', '#7FA67A')}
+      ${line('M0 94c14-28 28-36 42-28 14 8 32 2 46-14 8-9 22-11 32-7', '#B5AB94', 7)}${path('M88 54V38h14v16z', '#9A917C')}${path('M86 38l3-5h12l3 5z', '#7A725F')}
+      ${line('M30 0v14M90 0v8', '#8A5A33', 1)}${path('M22 18c0-6 16-6 16 0v8c0 5-16 5-16 0z', '#D7263D')}${rect(26, 14, 8, 2, '#F2C14E')}${rect(26, 28, 8, 2, '#F2C14E')}
+      ${rect(0, 104, 120, 16, '#6B8F5F')}`,
+    acc: `${circle(26, 14, 8, '#6E665F')}${circle(74, 14, 8, '#6E665F')}${line('M20 10l-3-3M80 10l3-3', '#D7263D', 2)}
+      ${line('M50 92v26', '#F2C14E', 2)}${dots([[50, 98], [50, 106], [50, 114]], '#F2C14E', 1.8)}
+      ${line('M92 66v10', '#8A5A33', 1.5)}${path('M84 82c0-6 16-6 16 0v8c0 5-16 5-16 0z', '#D7263D')}${rect(88, 78, 8, 2, '#F2C14E')}${rect(88, 92, 8, 2, '#F2C14E')}${line('M92 94v8', '#F2C14E', 1.5)}`,
+  },
+  {
+    id: 'egipto', name: 'Muu Faraona', theme: 'Giza, Egipto', fur: '#dcb074', places: ['egipto', 'cairo', 'giza'],
+    bg: `${rect(0, 0, 120, 120, '#FCE2A8')}${circle(100, 20, 12, '#FF9F43')}
+      ${path('M-14 90L14 42l28 48z', '#D9A45B')}${path('M14 42l28 48H14z', '#BC8740')}
+      ${path('M84 90l20-34 22 34z', '#D9A45B')}${path('M104 56l22 34h-22z', '#BC8740')}
+      ${rect(0, 90, 120, 30, '#EBC87D')}${line('M4 104q10-4 20 0M90 108q10-4 20 0', '#D9A45B', 2)}`,
+    acc: `${path('M14 38C12 2 88 2 86 38l6 44c-8 2-12-2-14-8V40C70 30 30 30 22 40v34c-2 6-6 10-14 8z', '#F2C14E')}
+      ${line('M17 28C28 10 72 10 83 28M14 42l-3 28M86 42l3 28', '#2B59C3', 3)}${line('M19 48l-2 24M81 48l2 24', '#2B59C3', 3)}
+      ${path('M30 88c12 7 28 7 40 0l5 12c-14 8-36 8-50 0z', '#2B59C3')}${line('M28 92c14 7 30 7 44 0', '#F2C14E', 2.5)}${line('M27 98c14 7 32 7 46 0', '#F2C14E', 2.5)}`,
+  },
+  {
+    id: 'brasil', name: 'Muu Carioca', theme: 'Río de Janeiro, Brasil', fur: '#9a4f2c', places: ['brasil', 'rio de janeiro', 'sao paulo'],
+    bg: `${rect(0, 0, 120, 120, '#9CE1F5')}${circle(20, 18, 9, '#FFD23F')}
+      ${path('M72 82c6-30 14-46 24-40 8 5 12 18 14 26l10 14z', '#4F8A6A')}${path('M0 82c4-14 12-20 22-10l8 10z', '#5E9A76')}
+      ${rect(100, 28, 2.500, 14, '#EEE')}${rect(95, 31, 12, 2, '#EEE')}
+      ${rect(0, 82, 120, 12, '#2AA9C4')}${path('M0 120V92c40-5 80-5 120 0v28z', '#F6DFA3')}`,
+    acc: `${[['#E4572E', 18, 6], ['#FFD23F', 28, -4], ['#3F9142', 40, -12], ['#F2577F', 50, -15], ['#3F9142', 60, -12], ['#FFD23F', 72, -4], ['#E4572E', 82, 6]].map(([c, x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5.500" ry="14" fill="${c}" transform="rotate(${(x - 50) * 1.2} ${x} ${y})"/>`).join('')}
+      ${path('M18 24c18-8 46-8 64 0v7c-18-6-46-6-64 0z', '#F2C14E')}${circle(50, 22, 3.5, '#D7263D')}
+      ${[34, 42, 50, 58, 66].map((x, i) => circle(x, i % 2 ? 96 : 93, 2.6, i % 2 ? '#FFD23F' : '#3F9142')).join('')}`,
+  },
+  {
+    id: 'peru', name: 'Muu Peruana', theme: 'Machu Picchu, Perú', fur: '#f5efe4', places: ['peru', 'machu picchu', 'cusco', 'cuzco', 'lima'],
+    bg: `${rect(0, 0, 120, 120, '#CFEAF5')}${path('M6 24c8-6 18-6 24 0zM78 14c7-5 16-5 22 0z', '#fff')}
+      ${path('M72 88c6-30 14-54 26-58 10-2 18 20 22 38v20z', '#4F7F5F')}${path('M0 88c6-14 16-24 26-22 8 2 14 10 20 22z', '#6B9A70')}
+      ${[[2, 78], [12, 84], [92, 80], [102, 74], [110, 84]].map(([x, y]) => rect(x, y, 8, 6, '#B5AB94')).join('')}
+      ${line('M0 94h120M0 102h120M0 110h120', '#6FA85A', 3)}${rect(0, 88, 120, 3, '#8CC56B')}`,
+    acc: `${path('M23 30C21 4 79 4 77 30l3 22c-5 2-9-1-10-6l-1-14C60 26 40 26 31 32l-1 14c-1 5-5 8-10 6z', '#D7263D')}
+      ${[['#FFD23F', 20], ['#2B59C3', 14], ['#3F9142', 8]].map(([c, y]) => line(`M26 ${y + 4}C36 ${y - 4} 64 ${y - 4} 74 ${y + 4}`, c, 3)).join('')}${circle(50, 1, 4.5, '#FFD23F')}
+      ${line('M21 52v7M79 52v7', '#FFD23F', 2)}
+      ${line('M34 106l32 0M28 114h44', '#FFD23F', 2.5)}${[36, 44, 52, 60].map((x) => path(`M${x} 100l3-3 3 3-3 3z`, '#3F9142')).join('')}`,
+  },
+  {
+    id: 'india', name: 'Muu India', theme: 'Taj Mahal, India', fur: '#efe7da', places: ['india', 'delhi', 'agra', 'taj mahal'],
+    bg: `${rect(0, 0, 120, 120, '#FBD3D0')}${rect(0, 0, 120, 26, '#F7B4BE')}
+      ${path('M0 88V58c0-20 8-26 16-34 6 8 16 14 16 34v30z', '#FFFDF8')}${path('M12 30l4-16 4 16z', '#E5DCCB')}${path('M6 88V68c0-6 18-6 18 0v20z', '#C9B8A0')}
+      ${path('M102 88V40l3-14 3 14v48zM112 88V50l2-10 2 10v38z', '#FFFDF8')}
+      ${rect(0, 88, 120, 32, '#6FB4C9')}${line('M0 100q10-4 20 0t20 0 20 0 20 0 20 0 20 0', '#BDE5EE', 2)}`,
+    acc: `${line('M50 16v16', '#F2C14E', 1.8)}${circle(50, 34, 2.8, '#D7263D')}${line('M32 12c6 3 12 4 18 4s12-1 18-4', '#F2C14E', 1.8)}
+      ${[30, 36, 43, 50, 57, 64, 70].map((x, i) => circle(x, [90, 95, 99, 101, 99, 95, 90][i], 3.6, i % 2 ? '#FFB347' : '#FF8C2B')).join('')}
+      ${line('M30 92c6 22 36 22 44 28', '#F2C14E', 3)}`,
+  },
+  {
+    id: 'marruecos', name: 'Muu Marroquí', theme: 'Marrakech, Marruecos', fur: '#b8703a', places: ['marruecos', 'marrakech', 'fez'],
+    bg: `${rect(0, 0, 120, 120, '#FBCB95')}${circle(20, 20, 10, '#FFE27A')}
+      ${path('M86 100V52c0-16 34-16 34 0v48z', '#2B6FB3')}${path('M92 100V58c0-10 22-10 22 0v42z', '#C9E4F5')}${[[90, 50], [116, 50], [103, 40]].map(([x, y]) => circle(x, y, 2, '#F2C14E')).join('')}
+      ${path('M0 100c8-14 18-20 30-14 8 4 14 8 22 14z', '#E5A15C')}
+      ${path('M6 86c-1-5 3-6 5-4l4-2c3-3 6 0 8 2 4-2 7 1 7 4v6h-2v-4h-2v4h-2v-4h-6v4h-2v-4h-2v4H8z', '#8A5A33')}
+      ${rect(0, 100, 120, 20, '#E8B87A')}`,
+    acc: `${path('M34 26l3-20c8-3 18-3 26 0l3 20c-10 3-22 3-32 0z', '#C1121F')}${line('M50 4c8 0 14 6 14 16', '#1F1A1C', 1.6)}${circle(64, 22, 2, '#1F1A1C')}
+      ${path('M42 92h16l-3 26h-10z', '#F2C14E', 'opacity=".5"')}${line('M90 68v8', '#8A5A33', 1.5)}${path('M84 76h12l3 12c1 8-3 11-9 11s-10-3-9-11z', '#D9A45B')}${dots([[88, 85], [93, 85], [90, 91]], '#7A4A2B', 1.2)}`,
+  },
+  {
+    id: 'australia', name: 'Muu Australiana', theme: 'Sídney, Australia', fur: '#dcb074', places: ['australia', 'sidney', 'sydney', 'melbourne'],
+    bg: `${rect(0, 0, 120, 120, '#A8E0F5')}${circle(104, 18, 9, '#FFD23F')}
+      ${path('M0 88c2-18 8-30 18-36-2 12 0 26 6 36zM14 88c2-14 8-24 18-28-2 10 0 20 4 28zM30 88c2-10 6-16 14-18-2 6-1 12 2 18z', '#FFFDF8')}${line('M18 52c-2 12 0 26 6 36M32 60c-2 10 0 20 4 28', '#D9D2C2', 1)}
+      ${line('M78 88c8-26 34-26 42 0', '#6B7A88', 3)}${line('M84 76v12M94 66v22M106 66v22M116 76v12', '#6B7A88', 1.5)}
+      ${rect(0, 88, 120, 32, '#2C8FC2')}${line('M0 102q10-4 20 0t20 0 20 0 20 0 20 0 20 0', '#8FCFE3', 2)}`,
+    acc: `${path('M24 28C22 6 78 6 76 28z', '#B58A55')}${rect(23, 22, 54, 5, '#6B4226')}${path('M6 26c16 9 72 9 88 0 4 7-14 14-44 14S2 33 6 26z', '#A67C4A')}
+      ${circle(40, 98, 4.5, '#8E93A0')}${circle(60, 98, 4.5, '#8E93A0')}${circle(50, 104, 9.500, '#A5A9B4')}${circle(47, 103, 1.2, '#1F1A1C')}${circle(53, 103, 1.2, '#1F1A1C')}${rect(48.500, 104, 3, 4, '#3A3236', 'rx="1.500"')}`,
+  },
 ];
 
+VAQUITAS.push(...MORE_VAQUITAS);
+export const SERIES = [
+  ['aventuras', 'Aventuras'], ['viajeras', 'Viajeras'], ['oficios', 'Oficios'], ['fiestas', 'Fiestas'], ['comida', 'Comida'], ['fantasia', 'Fantasía'], ['final', 'Premio final'],
+];
+export const seriesOf = (v) => v.series ?? (v.places || v.id === 'chapina' ? 'viajeras' : 'aventuras');
 export const TOTAL_VAQUITAS = VAQUITAS.length;
 const byId = (id) => VAQUITAS.find((v) => v.id === id);
 export const vaquitaById = byId;
@@ -263,6 +429,25 @@ const OUTFITS = {
   enamorada: { limb: '#E58FA2', chest: '#F6CAD2', hoof: '#79645D', sole: '#C4AFA6' },
   estrella: { body: '#F2C14E', limb: '#D9A520', chest: '#F2C14E', hoof: '#D7263D', sole: '#F2577F' },
   reina: { body: '#6A3FA0', limb: '#55308A', chest: '#FFF8EF', hoof: '#F2C14E', sole: '#FBE7A6' },
+  francia: { body: '#FFFFFF', limb: '#2A2430', chest: '#FFFFFF', hoof: '#1F1A1C', sole: '#5A5060' },
+  espana: { body: '#D7263D', limb: '#A81D2F', chest: '#D7263D', hoof: '#1F1A1C', sole: '#5A5060' },
+  usa: { body: '#7CC7AF', limb: '#5FAE96', chest: '#9AD8C4', hoof: '#4E9A82', sole: '#A9E0CE' },
+  italia: { body: '#FFFFFF', limb: '#2A2430', chest: '#FFFFFF', hoof: '#1F1A1C', sole: '#5A5060' },
+  turquia: { body: '#A5763F', limb: '#7A4A2B', chest: '#F3E6D2', hoof: '#3E2A1D', sole: '#7A5A40' },
+  mexico: { body: '#FFFFFF', limb: '#EDE6D9', chest: '#FFFFFF' },
+  'reino-unido': { body: '#D7263D', limb: '#1F1A1C', chest: '#D7263D', hoof: '#1F1A1C', sole: '#5A5060' },
+  alemania: { body: '#FFFFFF', limb: '#7A4A2B', chest: '#FFFFFF', hoof: '#3E2A1D', sole: '#7A5A40' },
+  grecia: { body: '#FFFFFF', limb: '#EDE6D9', chest: '#FFFFFF', hoof: '#C9971F', sole: '#F2D98A' },
+  austria: { body: '#1F1A1C', limb: '#2F2830', chest: '#1F1A1C', hoof: '#1F1A1C', sole: '#5A5060' },
+  japon: { body: '#F2577F', limb: '#D93F68', chest: '#F2577F', hoof: '#FFF8EF', sole: '#E8DCCB' },
+  tailandia: { body: '#1E9C96', limb: '#178079', chest: '#1E9C96', hoof: '#C9971F', sole: '#F2D98A' },
+  china: { body: '#D7263D', limb: '#A81D2F', chest: '#D7263D', hoof: '#1F1A1C', sole: '#5A5060' },
+  egipto: { body: '#FFFFFF', limb: '#EDE6D9', chest: '#F2C14E', hoof: '#C9971F', sole: '#F2D98A' },
+  brasil: { body: '#3F9142', limb: '#2F7033', hoof: '#F2C14E', sole: '#FBE7A6' },
+  peru: { body: '#D7263D', limb: '#2A2430', chest: '#D7263D', hoof: '#1F1A1C', sole: '#5A5060' },
+  india: { body: '#C2185B', limb: '#9A1148', chest: '#C2185B', hoof: '#C9971F', sole: '#F2D98A' },
+  marruecos: { body: '#2B6FB3', limb: '#205A94', chest: '#2B6FB3', hoof: '#F2C14E', sole: '#FBE7A6' },
+  australia: { body: '#C9AE76', limb: '#A98E57', chest: '#D9C08C', hoof: '#6B4226', sole: '#A06A3C' },
 };
 // Detalles de la ropa sobre el cuerpo, en coordenadas de la cara.
 const CLOTHES = {
@@ -278,6 +463,11 @@ const CLOTHES = {
   esquiadora: line('M50 100v18', '#B8202E', 2),
   super: path('M40 96h20l-4 10h-12z', '#F2C14E') + star(50, 100, 3.5, '#D7263D'),
   estrella: star(50, 104, 4, '#fff'),
+  francia: line('M28 104h10M62 104h10M26 112h12M62 112h12', '#2B59C3', 2.5),
+  espana: dots([[28, 104], [34, 112], [66, 104], [72, 112]], '#fff', 2),
+  italia: line('M28 104h10M62 104h10M26 112h12M62 112h12', '#D7263D', 2.5),
+  'reino-unido': line('M26 106h12M62 106h12', '#F2C14E', 2),
+  usa: line('M26 106h10M64 106h10', '#5FAE96', 2),
 };
 
 // La vaquita completa, sin su escena. Coordenadas de Muu sentada.
@@ -285,7 +475,7 @@ export const VAQ_VIEWBOX = '0 -32 120 172';
 const figure = (v) => {
   const head = fluffyHead(v.fur, { colors: v.colors ?? {}, spots: v.spots ?? '' });
   const under = v.under ? `<g transform="translate(10 0)">${v.under}</g>` : '';
-  return under + sittingFigure({ fur: v.fur, ...OUTFITS[v.id] }, head, v.acc + (CLOTHES[v.id] ?? ''));
+  return under + sittingFigure({ fur: v.fur, ...(v.outfit ?? OUTFITS[v.id]) }, head, v.acc + (CLOTHES[v.id] ?? ''));
 };
 export const vaquitaCow = (id) => figure(byId(id));
 
@@ -300,14 +490,37 @@ export function vaquitaCard(id, { locked = false, className = 'vaq-card' } = {})
 // ---------- Cuál vaquita gana una cita ----------
 const sameDay = (iso, sinceIso) => iso?.slice(5) === sinceIso?.slice(5) && iso?.slice(0, 4) > sinceIso?.slice(0, 4);
 const regulars = VAQUITAS.filter((v) => !v.special);
+const plain = (text) => (text ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const wordIn = (text, word) => new RegExp(`(^|[^a-z])${word}([^a-z]|$)`).test(text);
+const SERIES_WORDS = {
+  fiestas: ['navidad', 'cumpleanos', 'cumple', 'boda', 'halloween', 'ano nuevo', 'graduacion', 'feria', 'carnaval', 'fiesta', 'pascua', 'cine', 'pelicula'],
+  comida: ['cena', 'comida', 'almuerzo', 'desayuno', 'restaurante', 'pizza', 'sushi', 'taco', 'tacos', 'helado', 'postre', 'hamburguesa', 'ramen', 'chocolate', 'picnic', 'cocinar'],
+  fantasia: ['teatro', 'juego', 'juegos', 'videojuegos', 'disfraces', 'museo'],
+  oficios: ['clase', 'taller', 'trabajo', 'voluntariado', 'curso'],
+};
 
 // `taken` son los ids ya ganados; `total` es cuántas citas habrá contando esta.
 // Primero las metas, luego las ocasiones especiales y por último la siguiente en orden.
-export function nextVaquita({ taken = [], total = 1, date, place, ideaSrc, togetherSince } = {}) {
+export function nextVaquita({ taken = [], total = 1, date, title, place, ideaSrc, togetherSince } = {}) {
   const free = (id) => !taken.includes(id);
   const meta = VAQUITAS.find((v) => v.meta && v.meta <= total && free(v.id));
   if (meta) return meta.id;
   if (free('enamorada') && sameDay(date, togetherSince)) return 'enamorada';
+  const where = plain(place);
+  const traveler = VAQUITAS.find((v) => free(v.id) && v.places?.some((p) => wordIn(where, p)));
+  if (traveler) return traveler.id;
   if (free('chapina') && (ideaSrc === 'guatemala' || (place ?? '').trim())) return 'chapina';
-  return regulars.find((v) => free(v.id))?.id ?? null;
+  // Según de qué trató la cita, sale una de la serie que le queda mejor.
+  const about = plain(`${title ?? ''} ${place ?? ''}`);
+  const named = regulars.find((v) => v.series && free(v.id) && wordIn(about, v.id));
+  if (named) return named.id;
+  const series = Object.keys(SERIES_WORDS).find((s) => SERIES_WORDS[s].some((w) => wordIn(about, w)));
+  const themed = series && regulars.find((v) => v.series === series && free(v.id));
+  if (themed) return themed.id;
+  const next = regulars.find((v) => free(v.id));
+  if (next) return next.id;
+  // Ya no quedan por citas: salen las de ocasión especial que falten y, al final, Muu Dorada.
+  const leftover = VAQUITAS.find((v) => v.special && !v.meta && v.id !== 'dorada' && free(v.id));
+  if (leftover) return leftover.id;
+  return VAQUITAS.every((v) => v.meta || v.id === 'dorada' || !free(v.id)) && free('dorada') ? 'dorada' : null;
 }

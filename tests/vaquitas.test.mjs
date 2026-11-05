@@ -1,13 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { VAQUITAS, TOTAL_VAQUITAS, nextVaquita, vaquitaCard, vaquitaCow } from '../js/vaquitas.js';
+import { SERIES, VAQUITAS, TOTAL_VAQUITAS, nextVaquita, seriesOf, vaquitaCard, vaquitaCow } from '../js/vaquitas.js';
 
 const ids = VAQUITAS.map((v) => v.id);
 const regularIds = VAQUITAS.filter((v) => !v.special).map((v) => v.id);
 
-test('hay 20 vaquitas distintas, todas dibujadas', () => {
-  assert.equal(TOTAL_VAQUITAS, 20);
-  assert.equal(new Set(ids).size, 20);
+test('una vaquita con lugar de otro país gana a su viajera, sin importar los acentos', () => {
+  assert.equal(nextVaquita({ place: 'París' }), 'francia');
+  assert.equal(nextVaquita({ place: 'Tokio, JAPÓN' }), 'japon');
+  assert.equal(nextVaquita({ place: 'Cancún' }), 'mexico');
+  assert.equal(nextVaquita({ place: 'Antigua' }), 'chapina', 'en Guatemala sigue la chapina');
+  assert.equal(nextVaquita({ place: 'París', taken: ['francia'] }), 'chapina', 'cada viajera se gana una vez');
+  assert.notEqual(nextVaquita({ place: 'Limón' }), 'peru', 'no confunde palabras parecidas');
+});
+
+test('hay una sola vaquita de Guatemala y viajeras de otros países', () => {
+  assert.equal(VAQUITAS.filter((v) => /guatemala/i.test(v.theme)).length, 1);
+  assert.equal(VAQUITAS.filter((v) => v.places).length, 19);
+});
+
+test('el tema de la cita elige la serie, y las series tienen su número', () => {
+  assert.equal(nextVaquita({ title: 'Cena romántica' }), 'helado');
+  assert.equal(nextVaquita({ title: 'Fuimos al cine' }), 'cine', 'si nombra a una vaquita, gana esa');
+  assert.equal(nextVaquita({ title: 'Fuimos al cine', taken: ['cine'] }), 'navidad', 'si ya la tienen, otra de su serie');
+  assert.equal(nextVaquita({ title: 'Caminata' }), 'astronauta', 'sin tema, sigue el orden');
+  const count = (s) => VAQUITAS.filter((v) => seriesOf(v) === s).length;
+  assert.deepEqual(SERIES.map(([s]) => count(s)), [19, 20, 15, 15, 15, 15, 1]);
+});
+
+test('Muu Dorada llega al final, cuando no queda ninguna otra', () => {
+  const others = ids.filter((id) => id !== 'dorada');
+  assert.equal(nextVaquita({ taken: others, total: 99 }), 'dorada');
+  assert.notEqual(nextVaquita({ taken: others.slice(1), total: 98 }), 'dorada');
+});
+
+test('hay 100 vaquitas distintas, todas dibujadas', () => {
+  assert.equal(TOTAL_VAQUITAS, 100);
+  assert.equal(new Set(ids).size, 100);
   for (const id of ids) {
     const card = vaquitaCard(id);
     const sticker = vaquitaCow(id);

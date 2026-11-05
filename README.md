@@ -38,7 +38,7 @@ Las ideas están en `js/date-ideas.js` (Guatemala, tendencias de redes, clásica
 
 ## Citas y vaquitas
 
-Cada cita se registra aparte de las libretas (`js/dates.js`), así que una libreta puede guardar muchas citas y borrar una libreta no borra las vaquitas. Cada cita gana una de las 20 vaquitas temáticas de `js/vaquitas.js`, que luego se puede usar como sticker; `nextVaquita` decide cuál.
+Cada cita se registra aparte de las libretas (`js/dates.js`), así que una libreta puede guardar muchas citas y borrar una libreta no borra las vaquitas. Cada cita gana una de las 100 vaquitas temáticas de `js/vaquitas.js` y `js/vaquitas-series.js`, que luego se puede usar como sticker; `nextVaquita` decide cuál.
 
 ## Publicación
 

@@ -3,12 +3,14 @@ import { deleteDate, listDates, longDate } from './dates.js';
 import { openRegisterDialog } from './date-dialog.js';
 import { getBook } from './db.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
-import { TOTAL_VAQUITAS, VAQUITAS, vaquitaById, vaquitaCard } from './vaquitas.js';
+import { SERIES, TOTAL_VAQUITAS, VAQUITAS, seriesOf, vaquitaById, vaquitaCard } from './vaquitas.js';
 
 const lockedHint = (v) => {
   if (v.meta) return `Llega con la cita ${v.meta}`;
   if (v.special === 'aniversario') return 'Una cita en su aniversario';
   if (v.special === 'chapina') return 'Una cita fuera de casa, con lugar';
+  if (v.special === 'dorada') return 'Al completar todas las demás';
+  if (v.places) return `Una cita en ${v.theme.split(', ').pop()}`;
   return 'Por descubrir';
 };
 
@@ -68,14 +70,17 @@ export async function renderCollection(app, isCurrent) {
           </div>
           <button class="btn primary" data-register>Registrar cita</button>
         </header>
-        <div class="vaq-grid">
-          ${VAQUITAS.map((v) => {
-            const record = owner.get(v.id);
-            return record
-              ? `<button class="vaq-tile" data-date="${record.id}">${vaquitaCard(v.id)}<strong>${esc(v.name)}</strong><span>${esc(v.theme)}</span></button>`
-              : `<div class="vaq-tile is-locked">${vaquitaCard(v.id, { locked: true })}<strong>???</strong><span>${esc(lockedHint(v))}</span></div>`;
-          }).join('')}
-        </div>
+        ${SERIES.map(([key, label]) => {
+          const list = VAQUITAS.filter((v) => seriesOf(v) === key);
+          const won = list.filter((v) => owner.has(v.id)).length;
+          return `<h2 class="series-title">${esc(label)} <span>${won} de ${list.length}</span></h2>
+            <div class="vaq-grid">${list.map((v) => {
+              const record = owner.get(v.id);
+              return record
+                ? `<button class="vaq-tile" data-date="${record.id}">${vaquitaCard(v.id)}<strong>${esc(v.name)}</strong><span>${esc(v.theme)}</span></button>`
+                : `<div class="vaq-tile is-locked">${vaquitaCard(v.id, { locked: true })}<strong>???</strong><span>${esc(lockedHint(v))}</span></div>`;
+            }).join('')}</div>`;
+        }).join('')}
         <h2 class="shelf-title">Sus citas</h2>
         ${dates.length ? `<ul class="date-list">${dates.map((d) => `
           <li><button data-date="${d.id}">
