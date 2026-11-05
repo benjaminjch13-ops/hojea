@@ -1,5 +1,5 @@
 // Pantalla "Sus vaquitas": la colección completa y la lista de citas.
-import { deleteDate, listDates, longDate } from './dates.js';
+import { currentCostume, deleteDate, listDates, longDate, setCostume } from './dates.js';
 import { openRegisterDialog } from './date-dialog.js';
 import { getBook } from './db.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
@@ -26,6 +26,7 @@ async function showDetail(record, onChange) {
   const v = record.cow ? vaquitaById(record.cow) : null;
   const where = await locatePage(record);
   const lostPage = record.pageId && !where;
+  const wearing = v && (await currentCostume()) === v.id;
   await modal(`
     <div class="manage-head">
       <h2>${esc(v ? v.name : record.title)}</h2>
@@ -35,11 +36,20 @@ async function showDetail(record, onChange) {
     ${v ? `<p class="detail-theme">${esc(v.theme)}</p>` : ''}
     <p class="detail-date"><strong>${esc(record.title)}</strong><br>${esc(longDate(record.date))}${record.place ? ` · ${esc(record.place)}` : ''}</p>
     ${lostPage ? '<p class="date-hint">La página de esta cita ya no está en la libreta.</p>' : ''}
+    ${v ? `<button class="btn ghost detail-dress" data-wear>${wearing ? 'Quitarle el disfraz a Muu' : 'Ponerle este disfraz a Muu'}</button>` : ''}
     <div class="dialog-actions">
       <button class="btn ghost" data-delete>Borrar esta cita</button>
       ${where ? `<a class="btn primary" href="#/libro/${where.book.id}/hoja/${where.index}" data-close>Abrir su página</a>` : ''}
     </div>`, (d, close) => {
     d.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => close()));
+    const wear = d.querySelector('[data-wear]');
+    if (wear) {
+      wear.onclick = async () => {
+        await setCostume(wearing ? null : v.id);
+        toast(wearing ? 'Muu ya no lleva disfraz' : `Muu ya lleva el disfraz de ${v.name}`);
+        close();
+      };
+    }
     d.querySelector('[data-delete]').onclick = async () => {
       const sure = await confirmDialog(
         '¿Borrar esta cita?',

@@ -573,6 +573,13 @@ button.vaq-tile:hover { transform: translateY(-3px) rotate(-1deg); }
 .barn-dots b.on { background: var(--muu-pink); transform: scale(1.15); }
 .barn-bit { position: absolute; z-index: 2; color: var(--muu-pink); font-size: 20px; font-style: normal; pointer-events: none; animation: barn-bit .75s ease-out forwards; }
 @keyframes barn-bit { from { opacity: 1; transform: translate(-50%, -50%) scale(.6); } to { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2); } }
+.muu.has-costume { margin-top: 26px; }
+.costume-grid { max-height: 240px; margin-bottom: 18px; overflow-y: auto; }
+.costume-grid .breed-cow { width: 62px; }
+.breed-tile .breed-cow * { animation: none !important; }
+.reveal-dress { margin: 0 0 10px; }
+.reveal-card.reveal-muu { box-shadow: none; overflow: visible; filter: drop-shadow(0 12px 12px rgba(84, 67, 61, .3)); }
+.detail-dress { display: block; width: 100%; margin-bottom: 8px; }
 .reveal-result { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 20px; overflow-y: auto; }
 .reveal-result h2 { margin: 0 0 4px; font: 400 clamp(32px, 6vw, 44px)/1.1 "Caveat Brush", cursive; }
 .reveal-result p { max-width: 480px; margin: 0 0 16px; color: var(--ink-soft); }

@@ -130,15 +130,17 @@ export function sittingFigure({ fur, body = fur, limb, hoof, sole, chest, tail, 
     <path class="cow-chest" d="${shaggy(60, 90, 23, 15, 12, 0.24)}" fill="${chestColor}"/>
     <g class="cow-head" transform="translate(10 0)">${head}${front}</g>`;
 }
-export const muuSittingInner = (id) => sittingFigure(BODY_COLORS[id] ?? BODY_COLORS.rosa, muuBreedHead(id));
+export const muuBodyColors = (id) => BODY_COLORS[id] ?? BODY_COLORS.rosa;
+export const muuSittingInner = (id) => sittingFigure(muuBodyColors(id), muuBreedHead(id));
 export const MUU_SITTING_VIEWBOX = '4 2 112 136';
 export const muuSittingSVG = (id, className = 'muu-cow') =>
   `<svg class="${className}" viewBox="${MUU_SITTING_VIEWBOX}" aria-hidden="true">${muuSittingInner(id)}</svg>`;
 
-export const muuMascotHTML = (breed) => `
-  <button type="button" class="muu" data-muu aria-label="Saluda a Muu">
+// `figure` es el dibujo de Muu, con o sin disfraz.
+export const muuMascotHTML = (figure, costumed = false) => `
+  <button type="button" class="muu${costumed ? ' has-costume' : ''}" data-muu aria-label="Saluda a Muu">
     <span class="muu-say" aria-live="polite"></span>
-    ${muuSittingSVG(breed)}
+    <svg class="muu-cow" viewBox="${MUU_SITTING_VIEWBOX}" aria-hidden="true">${figure}</svg>
   </button>`;
 
 export const MUU_PHRASES = ['¡Muu!', 'Te amuuu', '¡Muuy buena cita!', 'Muuchos besos', '¿Y mi galleta?', 'Muuuu ♥', 'Peinen mi flequillo', '¡Otra libreta!'];

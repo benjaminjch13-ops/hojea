@@ -1,6 +1,6 @@
 // La colección: 100 vaquitas temáticas con su escena, y la regla que decide cuál gana cada cita.
 // Las escenas usan un lienzo de 120×120; los accesorios, las coordenadas de la cara de Muu (100×92).
-import { MUU_COLORS, MUU_PINK, fluffyHead, sittingFigure } from './cow.js';
+import { MUU_COLORS, MUU_PINK, fluffyHead, muuBodyColors, muuBreedHead, muuSittingInner, sittingFigure } from './cow.js';
 import { circle, daisy, dots, glasses, heart, line, path, rect, star, sunglasses } from './vaquita-art.js';
 import { MORE_VAQUITAS } from './vaquitas-series.js';
 
@@ -478,6 +478,18 @@ const figure = (v) => {
   return under + sittingFigure({ fur: v.fur, ...(v.outfit ?? OUTFITS[v.id]) }, head, v.acc + (CLOTHES[v.id] ?? ''));
 };
 export const vaquitaCow = (id) => figure(byId(id));
+
+// Muu en su color, con el traje de una vaquita ganada. Si el traje no cambia el cuerpo, conserva el suyo.
+export function muuFigure(breed, costumeId) {
+  const v = costumeId ? byId(costumeId) : null;
+  if (!v) return muuSittingInner(breed);
+  const outfit = v.outfit ?? OUTFITS[v.id] ?? {};
+  const body = { ...muuBodyColors(breed) };
+  const colors = outfit.body ? { ...body, ...outfit, spots: '', tail: body.tail } : body;
+  const under = v.under ? `<g transform="translate(10 0)">${v.under}</g>` : '';
+  return under + sittingFigure(colors, muuBreedHead(breed), v.acc + (CLOTHES[v.id] ?? ''));
+}
+export const COSTUME_VIEWBOX = VAQ_VIEWBOX;
 
 // La tarjeta completa con su fondo. `locked` muestra solo una silueta misteriosa.
 export function vaquitaCard(id, { locked = false, className = 'vaq-card' } = {}) {

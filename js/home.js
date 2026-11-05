@@ -2,12 +2,12 @@
 import { MUU_PHRASES, muuBreedSVG, muuMascotHTML } from './cow.js';
 import { SOURCE_LABELS, pickIdea } from './date-ideas.js';
 import { openRegisterDialog } from './date-dialog.js';
-import { listDates, longDate, todayISO } from './dates.js';
+import { currentCostume, listDates, longDate, todayISO } from './dates.js';
 import { getMeta, setMeta } from './db.js';
 import { ensureScans, pageThumbHTML } from './delulu.js';
 import { askMuu } from './muu-advisor.js';
 import { esc, icon, modal } from './ui.js';
-import { TOTAL_VAQUITAS, vaquitaCard } from './vaquitas.js';
+import { TOTAL_VAQUITAS, muuFigure, vaquitaCard } from './vaquitas.js';
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -126,6 +126,7 @@ export async function homeHTML(books) {
   const stats = [plural(books.length, 'libreta', 'libretas'), plural(pages, 'página', 'páginas')];
   if (decorated) stats.push(plural(decorated, 'decorada', 'decoradas'));
   const breed = await getMeta('muuBreed');
+  const costume = await currentCostume();
 
   return `
     <div class="home-deco" aria-hidden="true">${['♥', '✦', '♥', '✦', '♥', '✦', '♥'].map((g, i) => `<span class="deco-${i}">${g}</span>`).join('')}</div>
@@ -136,7 +137,7 @@ export async function homeHTML(books) {
         <p class="home-stats">${esc(stats.join(' · '))}</p>
       </div>
       <div class="home-head-end">
-        ${muuMascotHTML(breed)}
+        ${muuMascotHTML(muuFigure(breed, costume), !!costume)}
         <button class="icon-btn" data-theme aria-label="Cambiar a Muu y el fondo" title="Cambiar a Muu y el fondo">${icon('palette')}</button>
       </div>
     </header>

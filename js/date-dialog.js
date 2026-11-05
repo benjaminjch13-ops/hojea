@@ -1,9 +1,9 @@
 // Registrar una cita y ver caer la vaquita que ganó.
 import { getBook, getMeta, listBooks, saveBook, setMeta } from './db.js';
-import { chooseVaquita, longDate, saveDate, todayISO } from './dates.js';
+import { chooseVaquita, longDate, saveDate, setCostume, todayISO } from './dates.js';
 import { newDatePage } from './delulu.js';
 import { esc, icon, modal } from './ui.js';
-import { VAQ_VIEWBOX, vaquitaById, vaquitaCard, vaquitaCow } from './vaquitas.js';
+import { COSTUME_VIEWBOX, VAQ_VIEWBOX, muuFigure, vaquitaById, vaquitaCard, vaquitaCow } from './vaquitas.js';
 
 function formHTML({ title, place, books, lastBook, page }) {
   return `
@@ -59,12 +59,25 @@ function resultHTML(record, v, pageIndex) {
       </div>
       <h2>${v ? `¡Llegó ${esc(v.name)}!` : '¡Cita registrada!'}</h2>
       <p>${v ? `${esc(v.theme)}, por “${esc(record.title)}”.` : 'Por ahora ya ganaron todas las vaquitas disponibles. Las metas de citas todavía pueden traer sorpresas.'}</p>
+      ${v ? `<button class="btn primary reveal-dress" data-dress="${v.id}">Ponerle el disfraz a Muu</button>` : ''}
       <div class="dialog-actions">
         ${pageIndex != null ? '<button class="btn ghost" data-go="page">Abrir su página</button>' : ''}
         <button class="btn ghost" data-go="collection">Ver la colección</button>
-        <button class="btn primary" data-go="stay">Seguir</button>
+        <button class="btn ${v ? 'ghost' : 'primary'}" data-go="stay">Seguir</button>
       </div>
     </div>`;
+}
+
+// Muu aparece con el traje en el lugar de la vaquita.
+async function dressMuu(screen, costume) {
+  await setCostume(costume);
+  const breed = await getMeta('muuBreed');
+  const stage = screen.querySelector('.reveal-stage');
+  stage.querySelector('.reveal-card').outerHTML = `<svg class="reveal-card reveal-muu" viewBox="${COSTUME_VIEWBOX}" aria-hidden="true">${muuFigure(breed, costume)}</svg>`;
+  screen.querySelector('.reveal-result h2').textContent = '¡A Muu le quedó perfecto!';
+  screen.querySelector('.reveal-result p').textContent = 'Ya lo lleva puesto en el inicio. Pueden cambiarlo cuando quieran con el botón de la paleta.';
+  screen.querySelector('.reveal-dress').remove();
+  screen.querySelector('[data-go="stay"]')?.classList.replace('ghost', 'primary');
 }
 
 // Chispas que salen de donde tocaron.
@@ -99,6 +112,8 @@ export function showReveal(record, { pageIndex } = {}) {
     d.addEventListener('click', (e) => {
       const go = e.target.closest('[data-go]')?.dataset.go;
       if (go) { close(go); return; }
+      const dress = e.target.closest('[data-dress]');
+      if (dress) { dressMuu(screen, dress.dataset.dress); return; }
       const tap = e.target.closest('.barn-tap');
       if (!tap || taps >= TAPS_TO_OPEN) return;
       taps += 1;
@@ -116,7 +131,7 @@ export function showReveal(record, { pageIndex } = {}) {
         setTimeout(() => {
           if (!d.open) return;
           screen.innerHTML = resultHTML(record, v, pageIndex);
-          screen.querySelector('[data-go="stay"]')?.focus();
+          screen.querySelector('[data-dress], [data-go="stay"]')?.focus();
         }, 750);
       }
     });

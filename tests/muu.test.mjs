@@ -77,7 +77,8 @@ test('Muu sentada usa la cara y el pelaje del color elegido', () => {
     assert.ok(body.includes(muuBreedHead(b.id)), `${b.id}: cara`);
     assert.ok(!/undefined|NaN/.test(body), `${b.id}: dibujo completo`);
   }
-  assert.ok(muuMascotHTML('negra').includes(muuSittingInner('negra')), 'la mascota está sentada');
+  assert.ok(muuMascotHTML(muuSittingInner('negra')).includes(muuSittingInner('negra')), 'la mascota muestra su dibujo');
+  assert.ok(muuMascotHTML('x', true).includes('has-costume'), 'avisa si lleva disfraz');
   assert.equal(muuSittingInner('otra'), muuSittingInner('rosa'), 'un color desconocido vuelve a Muu rosa');
 });
 

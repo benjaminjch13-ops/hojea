@@ -42,5 +42,13 @@ export async function saveDate({ title, date, place = '', bookId = null, pageId 
   return record;
 }
 
+// El disfraz de Muu. Solo cuenta si todavía tienen la vaquita: al borrar su cita, Muu se lo quita.
+export const earnedCostumes = async () => (await listDates()).map((d) => d.cow).filter(Boolean);
+export async function currentCostume() {
+  const id = await getMeta('muuCostume');
+  return id && (await earnedCostumes()).includes(id) ? id : null;
+}
+export const setCostume = (id) => (id ? setMeta('muuCostume', id) : deleteMeta('muuCostume'));
+
 // La vaquita sale de la cita, así que se va con ella.
 export const deleteDate = (id) => deleteMeta(PREFIX + id);

@@ -3,18 +3,19 @@ import * as db from './db.js';
 import { Book3D } from './book3d.js';
 import { renderCollection } from './collection-view.js';
 import { coverDefaults, miniBookHTML } from './cover.js';
-import { MUU_BREEDS, muuBreedHead, muuSittingInner, muuSittingSVG } from './cow.js';
+import { MUU_BREEDS, muuBreedHead, muuSittingSVG } from './cow.js';
 import { renderCoverEditor } from './cover-editor.js';
 import { cropPhoto, openCamera } from './capture.js';
 import {
   closeEditor, deleteImagesOf, ensureScans, forgetScan, initDelulu, newBlankPage, openEditor, pageThumbHTML, refreshVaquitaStickers,
 } from './delulu.js';
 import { openRegisterDialog } from './date-dialog.js';
-import { dateForPage, longDate } from './dates.js';
+import { currentCostume, dateForPage, earnedCostumes, longDate, setCostume } from './dates.js';
 import { seedDemoBook } from './demo.js';
 import { openExportDialog } from './export-dialog.js';
 import { bindHome, homeHTML } from './home.js';
 import { THEMES, loadTheme, saveTheme } from './themes.js';
+import { COSTUME_VIEWBOX, muuFigure, vaquitaById } from './vaquitas.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
 
 const app = document.getElementById('app');
@@ -150,6 +151,20 @@ async function renderShelf(token) {
 
 async function themeDialog() {
   const current = (await db.getMeta('muuBreed')) ?? MUU_BREEDS[0].id;
+  let breed = current;
+  let costume = await currentCostume();
+  const earned = await earnedCostumes();
+  const costumeTile = (id) => `
+      <button type="button" class="breed-tile" data-costume="${id ?? ''}" aria-pressed="${(id ?? null) === costume}" title="${id ? esc(vaquitaById(id).name) : 'Sin disfraz'}">
+        <svg class="breed-cow" viewBox="${COSTUME_VIEWBOX}" aria-hidden="true" data-costume-figure="${id ?? ''}">${muuFigure(breed, id)}</svg>
+        <span>${id ? esc(vaquitaById(id).name) : 'Sin disfraz'}</span>
+      </button>`;
+  // Actualiza a Muu en el inicio, sin esperar a que se cierre el diálogo.
+  const repaint = () => {
+    app.querySelectorAll('.advice-cow').forEach((svg) => { svg.innerHTML = muuBreedHead(breed); });
+    app.querySelectorAll('.muu-cow').forEach((svg) => { svg.innerHTML = muuFigure(breed, costume); });
+    app.querySelector('.muu')?.classList.toggle('has-costume', !!costume);
+  };
   return modal(`
     <div class="manage-head">
       <h2>Color de Muu</h2>
@@ -161,6 +176,10 @@ async function themeDialog() {
         <span>${esc(b.name)}</span>
       </button>`).join('')}</div>
     <p class="breed-note">El ícono de la app siempre es Muu rosa.</p>
+    <h2 class="theme-title">Disfraz de Muu</h2>
+    ${earned.length
+    ? `<div class="breed-grid costume-grid">${[null, ...earned].map(costumeTile).join('')}</div>`
+    : '<p class="breed-note">Cada vaquita que ganen trae un disfraz para Muu. Registren una cita para estrenar el primero.</p>'}
     <h2 class="theme-title">Fondo de la app</h2>
     <div class="theme-grid">${THEMES.map((t) => `
       <button type="button" class="theme-tile" data-theme-id="${t.id}">
@@ -173,8 +192,17 @@ async function themeDialog() {
       if (!b) return;
       await db.setMeta('muuBreed', b.dataset.breed);
       d.querySelectorAll('[data-breed]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      app.querySelectorAll('.advice-cow').forEach((svg) => { svg.innerHTML = muuBreedHead(b.dataset.breed); });
-      app.querySelectorAll('.muu-cow').forEach((svg) => { svg.innerHTML = muuSittingInner(b.dataset.breed); });
+      breed = b.dataset.breed;
+      d.querySelectorAll('[data-costume-figure]').forEach((svg) => { svg.innerHTML = muuFigure(breed, svg.dataset.costumeFigure || null); });
+      repaint();
+    });
+    d.querySelector('.costume-grid')?.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-costume]');
+      if (!b) return;
+      costume = b.dataset.costume || null;
+      await setCostume(costume);
+      d.querySelectorAll('[data-costume]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      repaint();
     });
     d.querySelector('.theme-grid').addEventListener('click', (e) => {
       const b = e.target.closest('[data-theme-id]');

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SERIES, VAQUITAS, TOTAL_VAQUITAS, nextVaquita, seriesOf, vaquitaCard, vaquitaCow } from '../js/vaquitas.js';
+import { muuBreedHead, muuSittingInner } from '../js/cow.js';
+import { SERIES, VAQUITAS, TOTAL_VAQUITAS, muuFigure, nextVaquita, seriesOf, vaquitaCard, vaquitaCow } from '../js/vaquitas.js';
 
 const ids = VAQUITAS.map((v) => v.id);
 const regularIds = VAQUITAS.filter((v) => !v.special).map((v) => v.id);
@@ -17,6 +18,19 @@ test('una vaquita con lugar de otro país gana a su viajera, sin importar los ac
 test('hay una sola vaquita de Guatemala y viajeras de otros países', () => {
   assert.equal(VAQUITAS.filter((v) => /guatemala/i.test(v.theme)).length, 1);
   assert.equal(VAQUITAS.filter((v) => v.places).length, 19);
+});
+
+test('Muu puede llevar el disfraz de cualquier vaquita, en su propio color', () => {
+  assert.equal(muuFigure('rosa', null), muuSittingInner('rosa'), 'sin disfraz, es la Muu de siempre');
+  assert.equal(muuFigure('rosa', 'desconocida'), muuSittingInner('rosa'));
+  for (const id of ids) {
+    for (const breed of ['rosa', 'manchas']) {
+      const dressed = muuFigure(breed, id);
+      assert.ok(dressed.includes(muuBreedHead(breed)), `${id}: conserva la cara de ${breed}`);
+      assert.ok(!/undefined|NaN/.test(dressed), `${id} en ${breed}: dibujo completo`);
+    }
+  }
+  assert.notEqual(muuFigure('rosa', 'astronauta'), muuSittingInner('rosa'));
 });
 
 test('el tema de la cita elige la serie, y las series tienen su número', () => {
