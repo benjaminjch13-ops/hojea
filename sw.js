@@ -1,5 +1,5 @@
 // Primero la red, para no servir versiones viejas; la caché permite usar la app sin conexión.
-const CACHE = 'hojea-v11';
+const CACHE = 'hojea-v12';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/styles.css', 'css/delulu.css',
   'js/app.js', 'js/book3d.js', 'js/capture.js', 'js/charm-photos.js', 'js/cover.js', 'js/cover-editor.js', 'js/cow.js',

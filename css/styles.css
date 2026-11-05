@@ -551,10 +551,34 @@ button.vaq-tile:hover { transform: translateY(-3px) rotate(-1deg); }
 .detail-theme { margin: 8px 0 0; text-align: center; color: var(--sheet-soft); font-size: 14px; }
 .detail-date { margin: 10px 0 14px; text-align: center; }
 .dialog-detail a.btn { text-decoration: none; }
-.dialog-reveal { width: min(400px, calc(100vw - 32px)); overflow: hidden; text-align: center; }
+.dialog-reveal { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0; border-radius: 0; overflow: hidden; background: linear-gradient(180deg, var(--lavender), var(--bg-1) 55%, var(--strawberry-milk)); color: var(--ink); text-align: center; }
 .dialog-reveal .dialog-actions { flex-wrap: wrap; justify-content: center; }
-.reveal-stage { position: relative; width: 200px; margin: 6px auto 14px; }
-.reveal-card { animation: reveal-drop .85s cubic-bezier(.3, 1.3, .5, 1) both; box-shadow: 0 14px 26px -14px rgba(84, 67, 61, .7); }
+.reveal-screen { position: relative; display: flex; width: 100%; height: 100%; overflow: hidden; }
+.barn-tap { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 100%; padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); border: 0; background: none; color: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.barn-tap:focus { outline: none; }
+.barn-title { max-width: 640px; font: 400 clamp(30px, 6vw, 46px)/1.1 "Caveat Brush", cursive; animation: barn-title-in .5s cubic-bezier(.2, 1.3, .4, 1) both; }
+@keyframes barn-title-in { from { opacity: 0; transform: translateY(-16px) scale(.92); } }
+.barn { display: block; width: min(68vw, 46vh, 340px); height: auto; overflow: visible; --open: 0; transform-origin: 50% 100%; filter: drop-shadow(0 14px 16px rgba(84, 67, 61, .28)); animation: barn-idle 2.4s ease-in-out infinite; }
+@keyframes barn-idle { 0%, 88%, 100% { transform: none; } 91% { transform: rotate(-.8deg); } 94% { transform: rotate(.8deg); } 97% { transform: rotate(-.4deg); } }
+.barn.shaking { animation: barn-shake .45s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes barn-shake { 0%, 100% { transform: none; } 15% { transform: scale(1.04, .95) rotate(-2.5deg); } 35% { transform: scale(.97, 1.04) rotate(2.5deg); } 55% { transform: rotate(-1.5deg); } 75% { transform: rotate(1deg); } }
+.barn-door { transform-box: fill-box; transition: transform .35s cubic-bezier(.3, 1.3, .5, 1); }
+.barn-door-l { transform-origin: 0 50%; transform: scaleX(calc(1 - var(--open) * .88)); }
+.barn-door-r { transform-origin: 100% 50%; transform: scaleX(calc(1 - var(--open) * .88)); }
+.barn-shadow { filter: brightness(0) invert(.82); opacity: .75; }
+.barn-hint { font-size: 16px; font-weight: 600; color: var(--ink-soft); animation: barn-pulse 1.3s ease-in-out infinite; }
+@keyframes barn-pulse { 50% { opacity: .55; } }
+.barn-dots { display: flex; gap: 8px; }
+.barn-dots b { width: 12px; height: 12px; border: 2px solid var(--muu-pink); border-radius: 50%; transition: background .15s, transform .15s; }
+.barn-dots b.on { background: var(--muu-pink); transform: scale(1.15); }
+.barn-bit { position: absolute; z-index: 2; color: var(--muu-pink); font-size: 20px; font-style: normal; pointer-events: none; animation: barn-bit .75s ease-out forwards; }
+@keyframes barn-bit { from { opacity: 1; transform: translate(-50%, -50%) scale(.6); } to { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2); } }
+.reveal-result { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 20px; overflow-y: auto; }
+.reveal-result h2 { margin: 0 0 4px; font: 400 clamp(32px, 6vw, 44px)/1.1 "Caveat Brush", cursive; }
+.reveal-result p { max-width: 480px; margin: 0 0 16px; color: var(--ink-soft); }
+.reveal-stage { position: relative; width: min(64vw, 40vh, 300px); margin: 0 auto 16px; }
+.reveal-card { animation: reveal-out .8s cubic-bezier(.25, 1.4, .45, 1) both; box-shadow: 0 18px 32px -14px rgba(84, 67, 61, .75); }
+@keyframes reveal-out { 0% { opacity: 0; transform: translateY(70px) scale(.2) rotate(-8deg); } 55% { opacity: 1; transform: translateY(-14px) scale(1.08) rotate(3deg); } 80% { transform: translateY(4px) scale(.98) rotate(-1deg); } 100% { transform: none; } }
 .reveal-none { display: grid; place-items: center; height: 130px; color: var(--muu-pink); font-size: 70px; }
 @keyframes reveal-drop { 0% { opacity: 0; transform: translateY(-360px) rotate(-14deg); } 62% { opacity: 1; transform: translateY(0) rotate(3deg) scale(1.04, .94); } 80% { transform: translateY(-14px) rotate(-1deg); } 100% { transform: none; } }
 .reveal-pop { position: absolute; right: -28px; top: -8px; padding: 4px 12px; border-radius: 14px; background: var(--butter-yellow); color: var(--ink); font: 400 24px/1.1 "Caveat Brush", cursive; opacity: 0; animation: muu-pop 1.3s ease .55s forwards; }
@@ -606,7 +630,8 @@ button.vaq-tile:hover { transform: translateY(-3px) rotate(-1deg); }
 .since-form { display: flex; flex-direction: column; gap: 4px; }
 .since-form .text-field { color-scheme: light; }
 @media (prefers-reduced-motion: reduce) {
-  .b-float, .home-deco span, .home-card, .home-muu, .muu-thinking .advice-cow, .shelf-item, .shelf-new, .reveal-card { animation: none; }
+  .b-float, .home-deco span, .home-card, .home-muu, .muu-thinking .advice-cow, .shelf-item, .shelf-new, .reveal-card, .barn, .barn.shaking, .barn-title, .barn-hint, .barn-bit { animation: none; }
+  .barn-bit { display: none; }
   .reveal-pop, .reveal-hearts { display: none; }
 }
 .edit-stage-tools a.btn { text-decoration: none; }
