@@ -1,10 +1,13 @@
 // Tarjetas de la pantalla inicial: días juntos, un recuerdo al azar y los consejos de citas de Muu.
 import { MUU_PHRASES, muuBreedSVG, muuMascotHTML } from './cow.js';
 import { SOURCE_LABELS, pickIdea } from './date-ideas.js';
+import { openRegisterDialog } from './date-dialog.js';
+import { listDates, longDate, todayISO } from './dates.js';
 import { getMeta, setMeta } from './db.js';
 import { ensureScans, pageThumbHTML } from './delulu.js';
 import { askMuu } from './muu-advisor.js';
 import { esc, icon, modal } from './ui.js';
+import { TOTAL_VAQUITAS, vaquitaCard } from './vaquitas.js';
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -20,11 +23,6 @@ function daysSince(iso) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round((today - start) / 86400000);
 }
-
-const longDate = (iso) => {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString('es', { day: 'numeric', month: 'long', year: 'numeric' });
-};
 
 // La página de un recuerdo debe tener algo que ver: una foto o elementos.
 function allMemories(books) {
@@ -69,8 +67,23 @@ function ideaCard(idea, breed) {
       <div class="card-actions">
         <button class="btn primary" data-ask-muu>Pregúntale a Muu</button>
         <button class="link-btn" data-idea>Otra idea</button>
+        <button class="link-btn" data-idea-date>Registrar esta cita</button>
         <button class="link-btn" data-idea-book>Crear su libreta</button>
       </div>
+    </div>`;
+}
+
+function vaquitasCard(dates) {
+  const won = dates.filter((d) => d.cow);
+  const latest = won.slice(0, 4);
+  return `<div class="card-eyebrow">Sus vaquitas</div>
+    <div class="card-number">${won.length}<span class="card-of"> de ${TOTAL_VAQUITAS}</span></div>
+    ${latest.length
+    ? `<div class="vaq-row">${latest.map((d) => vaquitaCard(d.cow, { className: 'vaq-mini' })).join('')}</div>`
+    : '<p class="card-text">Cada cita que registren les regala una vaquita.</p>'}
+    <div class="card-actions">
+      <button class="btn primary" data-register>Registrar cita</button>
+      <a class="link-btn" href="#/vaquitas">Ver colección</a>
     </div>`;
 }
 
@@ -101,6 +114,7 @@ function answerHTML(answer, breed) {
     <p class="muu-note">${fromList ? esc(REASONS[answer.reason]) : 'Sugerida con IA: confirmen horarios, precios y que el lugar siga abierto antes de ir.'}</p>
     <div class="dialog-actions">
       <button type="button" class="btn ghost" data-book>Crear su libreta</button>
+      <button type="button" class="btn ghost" data-date>Registrar esta cita</button>
       <button type="button" class="btn primary" data-again>Otra idea</button>
     </div>`;
 }
@@ -133,6 +147,7 @@ export async function homeHTML(books) {
     <div class="home-cards">
       <article class="home-card" data-card="together"></article>
       <article class="home-card" data-card="memory"></article>
+      <article class="home-card" data-card="vaquitas"></article>
     </div>
     <h2 class="shelf-title">Sus libretas</h2>`;
 }
@@ -160,7 +175,7 @@ function sayMuu(button) {
 }
 
 // Da vida a las tarjetas. `createBook` crea una libreta con el título indicado.
-export async function bindHome(root, books, { createBook }) {
+export async function bindHome(root, books, { createBook, refresh }) {
   const slot = (name) => root.querySelector(`[data-card="${name}"]`);
   const memories = allMemories(books);
   let lastMemory = null;
@@ -187,7 +202,7 @@ export async function bindHome(root, books, { createBook }) {
   const openAdvisor = async () => {
     const cow = await breed();
     let current = null;
-    const title = await modal(`
+    const choice = await modal(`
       <div class="manage-head">
         <h2>Pregúntale a Muu</h2>
         <button class="icon-btn dark" data-close aria-label="Cerrar">${icon('close')}</button>
@@ -223,16 +238,21 @@ export async function bindHome(root, books, { createBook }) {
         if (chip) {
           chip.parentElement.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
         } else if (e.target.closest('[data-again]')) ask();
-        else if (e.target.closest('[data-book]')) close(current?.titulo);
+        else if (e.target.closest('[data-book]')) close('book');
+        else if (e.target.closest('[data-date]')) close('date');
       });
     }, 'dialog-muu');
-    if (title) createBook(title);
+    if (choice === 'book') createBook(current.titulo);
+    if (choice === 'date') registerDate({ title: current.titulo, ideaSrc: current.src });
+  };
+
+  const registerDate = async (options) => {
+    if (await openRegisterDialog(options)) refresh();
   };
 
   const chooseDate = async () => {
     const current = (await getMeta('togetherSince')) ?? '';
-    const today = new Date();
-    const max = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const max = todayISO();
     const value = await modal(`
       <h2>¿Desde cuándo están juntos?</h2>
       <form method="dialog" class="since-form">
@@ -262,6 +282,8 @@ export async function bindHome(root, books, { createBook }) {
     else if (t.closest('[data-since]')) chooseDate();
     else if (t.closest('[data-memory]')) paintMemory();
     else if (t.closest('[data-ask-muu]')) openAdvisor();
+    else if (t.closest('[data-register]')) registerDate();
+    else if (t.closest('[data-idea-date]')) registerDate({ title: idea.t, ideaSrc: idea.src });
     else if (t.closest('[data-idea-book]')) createBook(idea.t);
     else if (t.closest('[data-idea]')) {
       idea = nextIdea();
@@ -269,5 +291,6 @@ export async function bindHome(root, books, { createBook }) {
     }
   });
 
-  await Promise.all([paintIdea(), paintTogether(), paintMemory()]);
+  const paintVaquitas = async () => { slot('vaquitas').innerHTML = vaquitasCard(await listDates()); };
+  await Promise.all([paintIdea(), paintTogether(), paintMemory(), paintVaquitas()]);
 }

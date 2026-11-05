@@ -36,6 +36,10 @@ Los colores de la interfaz están en las variables de `:root`, al inicio de `css
 
 Las ideas están en `js/date-ideas.js` (Guatemala, tendencias de redes, clásicas y de vaquitas). "Pregúntale a Muu" llama a `api/muu.js`, que usa Claude con la clave guardada en Vercel como `ANTHROPIC_API_KEY`. Sin clave o sin conexión, Muu elige de su lista y lo avisa. Solo se envían los filtros y lo que se escribe en el antojo; las libretas y las fotos no salen del dispositivo.
 
+## Citas y vaquitas
+
+Cada cita se registra aparte de las libretas (`js/dates.js`), así que una libreta puede guardar muchas citas y borrar una libreta no borra las vaquitas. Cada cita gana una de las 20 vaquitas temáticas de `js/vaquitas.js`, que luego se puede usar como sticker; `nextVaquita` decide cuál.
+
 ## Publicación
 
 La app está en <https://dates-with-muu.vercel.app>. Cada push a `main` la publica en Vercel; `vercel.json` y `.vercelignore` definen qué se sube.

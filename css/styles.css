@@ -517,6 +517,45 @@ dialog.lightbox {
 .home-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 36px; }
 .home-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 176px; padding: 18px; border-radius: 20px; background: var(--strawberry-milk); box-shadow: 0 8px 22px -16px rgba(84, 67, 61, .45); animation: card-in .5s cubic-bezier(.2, .8, .3, 1) both; }
 .home-card:nth-child(2) { animation-delay: .07s; background: var(--lavender); }
+.home-card:nth-child(3) { animation-delay: .14s; background: var(--matcha-milk); }
+.card-of { font: 400 15px/1 var(--sans, inherit); color: var(--ink-soft); }
+.vaq-row { display: flex; gap: 6px; }
+.vaq-mini { display: block; width: 44px; height: 44px; border-radius: 10px; }
+.home-card a.link-btn { display: inline-flex; align-items: center; }
+.vaq-card, .detail-card, .reveal-card { display: block; width: 100%; height: auto; border-radius: 16px; }
+.vaq-card.is-locked, .reveal-card.is-locked { background: rgba(121, 100, 93, .12); }
+.vaq-shadow { filter: brightness(0); opacity: .22; }
+.collection { max-width: 1080px; height: 100dvh; margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) 16px 48px; overflow-y: auto; }
+.collection-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.collection-title { flex: 1; min-width: 0; }
+.collection-title h1 { margin: 0; font: 500 clamp(28px, 5vw, 42px)/1.1 var(--serif); }
+.collection-title p { margin: 2px 0 0; color: var(--ink-soft); font-size: 14px; }
+.vaq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 14px; margin-bottom: 32px; }
+.vaq-tile { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); text-align: center; font-size: 12px; }
+.vaq-tile strong { margin-top: 5px; font: 500 15px/1.2 var(--serif); }
+.vaq-tile span { color: var(--ink-soft); }
+button.vaq-tile { cursor: pointer; transition: transform .18s; }
+button.vaq-tile:hover { transform: translateY(-3px) rotate(-1deg); }
+.date-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.date-list button { display: grid; width: 100%; gap: 1px; padding: 12px 14px; border: 0; border-radius: 14px; background: var(--glass); color: var(--ink); text-align: left; font-size: 15px; cursor: pointer; }
+.date-when, .date-place { color: var(--ink-soft); font-size: 13px; }
+.date-empty { color: var(--ink-soft); }
+.date-form { display: flex; flex-direction: column; gap: 10px; }
+.date-form .text-field { width: 100%; color-scheme: light; }
+.date-hint { margin: 0; font-size: 13px; color: var(--sheet-soft); }
+.dialog-detail { width: min(420px, calc(100vw - 32px)); }
+.detail-card { width: min(260px, 100%); margin: 0 auto; }
+.detail-theme { margin: 8px 0 0; text-align: center; color: var(--sheet-soft); font-size: 14px; }
+.detail-date { margin: 10px 0 14px; text-align: center; }
+.dialog-detail a.btn { text-decoration: none; }
+.dialog-reveal { width: min(400px, calc(100vw - 32px)); overflow: hidden; text-align: center; }
+.dialog-reveal .dialog-actions { flex-wrap: wrap; justify-content: center; }
+.reveal-stage { position: relative; width: 200px; margin: 6px auto 14px; }
+.reveal-card { animation: reveal-drop .85s cubic-bezier(.3, 1.3, .5, 1) both; box-shadow: 0 14px 26px -14px rgba(84, 67, 61, .7); }
+.reveal-none { display: grid; place-items: center; height: 130px; color: var(--muu-pink); font-size: 70px; }
+@keyframes reveal-drop { 0% { opacity: 0; transform: translateY(-360px) rotate(-14deg); } 62% { opacity: 1; transform: translateY(0) rotate(3deg) scale(1.04, .94); } 80% { transform: translateY(-14px) rotate(-1deg); } 100% { transform: none; } }
+.reveal-pop { position: absolute; right: -28px; top: -8px; padding: 4px 12px; border-radius: 14px; background: var(--butter-yellow); color: var(--ink); font: 400 24px/1.1 "Caveat Brush", cursive; opacity: 0; animation: muu-pop 1.3s ease .55s forwards; }
+.reveal-hearts i { position: absolute; left: 50%; bottom: 10px; color: var(--muu-pink); font-style: normal; font-size: 18px; opacity: 0; animation: muu-heart 1.1s ease-out var(--d) forwards; }
 .home-muu { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 14px; padding: 18px; border-radius: 20px; background: var(--butter-yellow); box-shadow: 0 8px 22px -16px rgba(84, 67, 61, .45); animation: card-in .5s cubic-bezier(.2, .8, .3, 1) both; }
 .home-muu .card-idea { margin-top: 4px; }
 .home-muu .card-text { margin: 4px 0 6px; }
@@ -564,13 +603,18 @@ dialog.lightbox {
 .since-form { display: flex; flex-direction: column; gap: 4px; }
 .since-form .text-field { color-scheme: light; }
 @media (prefers-reduced-motion: reduce) {
-  .b-float, .home-deco span, .home-card, .home-muu, .muu-thinking .advice-cow, .shelf-item, .shelf-new { animation: none; }
+  .b-float, .home-deco span, .home-card, .home-muu, .muu-thinking .advice-cow, .shelf-item, .shelf-new, .reveal-card { animation: none; }
+  .reveal-pop, .reveal-hearts { display: none; }
 }
 .edit-stage-tools a.btn { text-decoration: none; }
 
 /* ---------- Muu, la vaquita ---------- */
 .home-head-end { display: flex; align-items: flex-start; gap: 10px; }
 .muu { position: relative; width: clamp(92px, 15vw, 132px); padding: 0; border: 0; background: none; cursor: pointer; transform-origin: 50% 100%; animation: muu-sway 5s ease-in-out infinite; }
+.cow-belly, .cow-chest { transform-box: fill-box; transform-origin: 50% 100%; animation: cow-breathe 3.4s ease-in-out infinite; }
+@keyframes cow-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.012, 1.03); } }
+.cow-tail { transform-box: fill-box; transform-origin: 0 100%; animation: cow-tail 3.2s ease-in-out infinite; }
+@keyframes cow-tail { 0%, 62%, 100% { transform: rotate(0); } 70% { transform: rotate(13deg); } 78% { transform: rotate(-8deg); } 86% { transform: rotate(9deg); } 94% { transform: rotate(-3deg); } }
 .muu-cow { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 8px 10px rgba(84, 67, 61, .3)); }
 .muu:hover .muu-cow { transform: scale(1.04) rotate(-2deg); transition: transform .2s; }
 .muu.hop { animation: muu-hop .6s cubic-bezier(.3, 1.4, .5, 1); }
@@ -595,5 +639,5 @@ dialog.lightbox {
   .muu-say { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .muu, .cow-eye, .cow-ear-l, .cow-ear-r { animation: none; }
+  .muu, .cow-eye, .cow-ear-l, .cow-ear-r, .cow-belly, .cow-chest, .cow-tail { animation: none; }
 }

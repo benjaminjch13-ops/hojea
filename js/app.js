@@ -1,13 +1,16 @@
 // Pantallas y navegación de Date's with Muu.
 import * as db from './db.js';
 import { Book3D } from './book3d.js';
+import { renderCollection } from './collection-view.js';
 import { coverDefaults, miniBookHTML } from './cover.js';
-import { MUU_BREEDS, muuBreedHead, muuBreedSVG } from './cow.js';
+import { MUU_BREEDS, muuBreedHead, muuSittingInner, muuSittingSVG } from './cow.js';
 import { renderCoverEditor } from './cover-editor.js';
 import { cropPhoto, openCamera } from './capture.js';
 import {
-  closeEditor, deleteImagesOf, ensureScans, forgetScan, initDelulu, newBlankPage, openEditor, pageThumbHTML,
+  closeEditor, deleteImagesOf, ensureScans, forgetScan, initDelulu, newBlankPage, openEditor, pageThumbHTML, refreshVaquitaStickers,
 } from './delulu.js';
+import { openRegisterDialog } from './date-dialog.js';
+import { dateForPage, longDate } from './dates.js';
 import { seedDemoBook } from './demo.js';
 import { openExportDialog } from './export-dialog.js';
 import { bindHome, homeHTML } from './home.js';
@@ -31,7 +34,8 @@ async function route() {
   const pages = location.hash.match(/^#\/libro\/([^/]+)\/paginas\/([^/]+)$/);
   const reading = location.hash.match(/^#\/libro\/([^/]+)(?:\/hoja\/(\d+))?$/);
   let nextCleanup;
-  if (cover) nextCleanup = await openCoverRoute(cover[1], token);
+  if (location.hash === '#/vaquitas') await renderCollection(app, () => token === routeToken);
+  else if (cover) nextCleanup = await openCoverRoute(cover[1], token);
   else if (pages) nextCleanup = await openPagesRoute(pages[1], pages[2], token);
   else if (reading) nextCleanup = await renderBook(reading[1], token, reading[2]);
   else nextCleanup = await renderShelf(token);
@@ -72,10 +76,17 @@ async function openPagesRoute(id, where, token) {
   if (where === 'nueva') history.replaceState(null, '', `#/libro/${book.id}/paginas/${index}`);
   const scansBefore = new Set(book.pages.map((p) => p.scan).filter(Boolean));
   app.innerHTML = '';
+  await refreshVaquitaStickers();
+  if (token !== routeToken) return undefined;
   openEditor(book, index, {
     tab: creating ? 'plantillas' : undefined,
     onBack: () => { location.hash = `#/libro/${book.id}`; },
     onCover: () => { location.hash = `#/libro/${book.id}/portada`; },
+    onDate: async (page) => {
+      const existing = await dateForPage(page.id);
+      if (existing) toast(`Esta página ya es la cita “${existing.title}”, del ${longDate(existing.date)}`);
+      else await openRegisterDialog({ book, page });
+    },
   });
   return async () => {
     await closeEditor();
@@ -134,7 +145,7 @@ async function renderShelf(token) {
     location.hash = `#/libro/${book.id}/portada`;
   };
   app.querySelector('[data-new]').onclick = () => createBook('Mi libreta');
-  await bindHome(app.querySelector('.shelf'), books, { createBook });
+  await bindHome(app.querySelector('.shelf'), books, { createBook, refresh: route });
 }
 
 async function themeDialog() {
@@ -146,7 +157,7 @@ async function themeDialog() {
     </div>
     <div class="breed-grid">${MUU_BREEDS.map((b) => `
       <button type="button" class="breed-tile" data-breed="${b.id}" aria-pressed="${b.id === current}">
-        ${muuBreedSVG(b.id, 'breed-cow')}
+        ${muuSittingSVG(b.id, 'breed-cow')}
         <span>${esc(b.name)}</span>
       </button>`).join('')}</div>
     <p class="breed-note">El ícono de la app siempre es Muu rosa.</p>
@@ -162,7 +173,8 @@ async function themeDialog() {
       if (!b) return;
       await db.setMeta('muuBreed', b.dataset.breed);
       d.querySelectorAll('[data-breed]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-      app.querySelectorAll('.muu-cow, .advice-cow').forEach((svg) => { svg.innerHTML = muuBreedHead(b.dataset.breed); });
+      app.querySelectorAll('.advice-cow').forEach((svg) => { svg.innerHTML = muuBreedHead(b.dataset.breed); });
+      app.querySelectorAll('.muu-cow').forEach((svg) => { svg.innerHTML = muuSittingInner(b.dataset.breed); });
     });
     d.querySelector('.theme-grid').addEventListener('click', (e) => {
       const b = e.target.closest('[data-theme-id]');

@@ -84,13 +84,61 @@ export const MUU_BREEDS = [
 ];
 const breedById = (id) => MUU_BREEDS.find((b) => b.id === id) ?? MUU_BREEDS[0];
 export const muuBreedHead = (id) => breedById(id).head();
-export const muuBreedSVG = (id, className = 'muu-cow') =>
+export const muuBreedSVG = (id, className = 'advice-cow') =>
   `<svg class="${className}" viewBox="-2 0 104 92" aria-hidden="true">${muuBreedHead(id)}</svg>`;
+
+// Colores del cuerpo de cada Muu; los que faltan se calculan a partir del pelaje.
+const BODY_COLORS = {
+  rosa: { fur: MUU_PINK, chest: '#F6CAD2', limb: '#E58FA2', hoof: '#79645D', sole: '#C4AFA6' },
+  cafe: { fur: '#b8703a' },
+  rubia: { fur: '#dcb074' },
+  rojiza: { fur: '#9a4f2c' },
+  negra: { fur: '#4d3a33', sole: '#7d6a62' },
+  gris: { fur: '#a7a09a' },
+  blanca: { fur: '#efe7da' },
+  manchas: { fur: '#f5efe4', chest: '#fffaf1', limb: '#e6dccb', hoof: '#3a2c27', sole: '#6b5a52', tail: '#3a2c27', spots: `<path d="M34 96c7-4 13 1 12 9-1 7-10 10-14 4-3-5-2-11 2-13zM84 104c5-2 9 2 8 7-2 5-9 6-12 2-2-4 0-8 4-9z" fill="#3a2c27"/>` },
+};
+
+// Muu sentada de frente: cabeza grande, pecho peludo, patas estiradas con las pezuñas hacia adelante.
+// `body` es el color del cuerpo cuando lleva ropa; `head` y `front` se dibujan encima, en coordenadas de la cara.
+export function sittingFigure({ fur, body = fur, limb, hoof, sole, chest, tail, spots = '' }, head, front = '') {
+  const limbColor = limb ?? shade(body, -0.14);
+  const hoofColor = hoof ?? shade(fur, -0.52);
+  const soleColor = sole ?? shade(hoofColor, 0.42);
+  const chestColor = chest ?? shade(fur, 0.2);
+  const tailColor = tail ?? shade(fur, -0.24);
+  // Planta clara con casco oscuro por fuera y la hendidura de las vacas arriba.
+  const foot = (x, tilt) => `<g transform="rotate(${tilt} ${x} 120)">
+      <ellipse cx="${x}" cy="120" rx="15.500" ry="16.500" fill="${hoofColor}"/>
+      <ellipse cx="${x}" cy="122.500" rx="11.500" ry="12" fill="${soleColor}"/>
+      <path d="M${x} 104v11" stroke="${hoofColor}" stroke-width="3" stroke-linecap="round"/>
+    </g>`;
+  // La pata delantera termina en un casco ancho y redondeado, también partido.
+  const arm = (x) => `<path d="M${x - 8} 90c-1 10 0 19 1 26h14c1-7 2-16 1-26z" fill="${limbColor}"/>
+    <path d="M${x - 8} 114c5-3 11-3 16 0 3 5 3 11 0 15-5 2-11 2-16 0-3-4-3-10 0-15z" fill="${hoofColor}"/>
+    <path d="M${x} 121v8" stroke="${soleColor}" stroke-width="2" stroke-linecap="round"/>`;
+  return `
+    <g class="cow-tail"><path d="M88 110c13 3 21-3 21-15" fill="none" stroke="${tailColor}" stroke-width="5.500" stroke-linecap="round"/><path d="${shaggy(109, 88, 5.500, 7.500, 8, 0.2)}" fill="${tailColor}"/></g>
+    <g class="cow-belly">
+      <path d="${shaggy(26, 108, 14, 12, 9, 0.12)}" fill="${limbColor}"/>
+      <path d="${shaggy(94, 108, 14, 12, 9, 0.12)}" fill="${limbColor}"/>
+      <path d="${shaggy(60, 100, 32, 26, 18, 0.1)}" fill="${body}"/>
+      ${spots}
+    </g>
+    ${foot(22, -14)}${foot(98, 14)}
+    ${arm(46)}${arm(74)}
+    <path class="cow-chest" d="${shaggy(60, 90, 23, 15, 12, 0.24)}" fill="${chestColor}"/>
+    <g class="cow-head" transform="translate(10 0)">${head}${front}</g>`;
+}
+export const muuSittingInner = (id) => sittingFigure(BODY_COLORS[id] ?? BODY_COLORS.rosa, muuBreedHead(id));
+export const MUU_SITTING_VIEWBOX = '4 2 112 136';
+export const muuSittingSVG = (id, className = 'muu-cow') =>
+  `<svg class="${className}" viewBox="${MUU_SITTING_VIEWBOX}" aria-hidden="true">${muuSittingInner(id)}</svg>`;
 
 export const muuMascotHTML = (breed) => `
   <button type="button" class="muu" data-muu aria-label="Saluda a Muu">
     <span class="muu-say" aria-live="polite"></span>
-    ${muuBreedSVG(breed)}
+    ${muuSittingSVG(breed)}
   </button>`;
 
 export const MUU_PHRASES = ['¡Muu!', 'Te amuuu', '¡Muuy buena cita!', 'Muuchos besos', '¿Y mi galleta?', 'Muuuu ♥', 'Peinen mi flequillo', '¡Otra libreta!'];

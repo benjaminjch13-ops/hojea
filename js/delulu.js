@@ -3,10 +3,12 @@
 import { confirmDialog, toast as showToast } from './ui.js';
 import { COW_SPOTS, charmSVG, engraveColor, paintFur } from './cover.js';
 import { cowStickers } from './cow.js';
+import { listDates } from './dates.js';
+import { VAQUITAS, VAQ_VIEWBOX, vaquitaCow } from './vaquitas.js';
 import { deleteMeta, getMeta, getMetaByPrefix, getPageUrl, saveBook, setMeta } from './db.js';
 
 let S = null;
-const HOOKS = { back: null, cover: null };
+const HOOKS = { back: null, cover: null, date: null };
 const toast = (msg) => showToast(msg);
 const confirmBox = (title, text, ok, fn) => { confirmDialog(title, text, ok).then((yes) => { if (yes) fn(); }); };
 const touch = () => matchMedia('(pointer: coarse)').matches;
@@ -425,7 +427,7 @@ function renderCtx(){$('#ctx').innerHTML='';const host=ctxHost();
      else h+=`<select data-c="tbg" aria-label="Fondo del texto">${[['','Sin fondo'],['papel','Papel rasgado'],['cinta','Etiqueta']].map(([v,l])=>`<option value="${v}"${(e.bg||'')===v?' selected':''}>${l}</option>`).join('')}</select>`}
    if(e.type==='image')h+=B('photo','image','Foto, marco y forma')+B('bg','wand','Quitar fondo');
    if(e.type==='sticker'&&e.custom)h+=B('bg','wand','Quitar fondo');
-   if((e.type==='sticker'&&!e.custom)||e.type==='paper'||e.type==='stroke'||e.type==='tape')h+=`<input type="color" data-c="color" value="${e.color||(STICKERS.find(s=>s.id===e.sid)||{}).col||'#e9c2c4'}" aria-label="Color">`;
+   if((e.type==='sticker'&&!e.custom&&!e.sid?.startsWith('vq-'))||e.type==='paper'||e.type==='stroke'||e.type==='tape')h+=`<input type="color" data-c="color" value="${e.color||(STICKERS.find(s=>s.id===e.sid)||{}).col||'#e9c2c4'}" aria-label="Color">`;
    if(e.type==='tape')h+=`<select data-c="pat" aria-label="Diseño de la cinta">${TAPES.map(t=>`<option value="${t.id}"${t.id===e.pat?' selected':''}>${t.n}</option>`).join('')}</select>`;
    h+=tail}
   host.innerHTML=`<div class="ctx">${h}</div>`;
@@ -581,7 +583,7 @@ const isFav=k=>S.prefs.favs.includes(k);
 function favBtn(k){return `<button class="fav${isFav(k)?' on':''}" data-fav="${k}" aria-label="Favorito">${isFav(k)?'★':'☆'}</button>`}
 function stickerTile(st){return `<div class="tile" draggable="true" data-add="sticker:${st.id}" title="${st.n}" role="button" tabindex="0"><svg viewBox="${st.vb||'0 0 100 100'}" style="overflow:visible">${st.s(st.col)}</svg>${favBtn('sticker:'+st.id)}</div>`}
 function libItems(){const t=V.libTab;
-  if(t==='stickers'){const q=V.q.toLowerCase();const list=STICKERS.filter(s=>(V.cat==='todos'||s.c.includes(V.cat))&&(!q||(s.n+' '+s.c).toLowerCase().includes(q)));
+  if(t==='stickers'){const q=V.q.toLowerCase();const list=STICKERS.filter(s=>!LOCKED_STICKERS.has(s.id)&&(V.cat==='todos'||s.c.includes(V.cat))&&(!q||(s.n+' '+s.c).toLowerCase().includes(q)));
     const custom=S.prefs.custom.filter(id=>S.images[id]);
     return `<input class="search" type="search" id="libQ" placeholder="Buscar: flor, gato, sello…" value="${esc(V.q)}">
      <div class="chips" id="libCats">${CATS.map(([v,l])=>`<button class="chip${V.cat===v?' on':''}" data-cat="${v}">${l}</button>`).join('')}</div>
@@ -1000,6 +1002,11 @@ function packItems(){const a=ED.a,[W,H]=dims(a),pk={st:curPack==='basicas'?['sta
 /* ==================== Vaquitas ==================== */
 CATS.splice(1,0,['vaquitas','Vaquitas']);
 STICKERS.push(...cowStickers(W));
+// Las vaquitas de la colección: siempre se pueden dibujar, pero solo aparecen en la lista las que ya ganaron.
+STICKERS.push(...VAQUITAS.map(v=>({id:`vq-${v.id}`,n:v.name,c:'vaquitas coleccion',col:'#ffffff',vb:VAQ_VIEWBOX,s:()=>vaquitaCow(v.id)})));
+let LOCKED_STICKERS=new Set(VAQUITAS.map(v=>`vq-${v.id}`));
+export async function refreshVaquitaStickers(){const won=new Set((await listDates()).map(d=>d.cow&&`vq-${d.cow}`));LOCKED_STICKERS=new Set(VAQUITAS.map(v=>`vq-${v.id}`).filter(id=>!won.has(id)))}
+$('#btnCita').onclick=async()=>{if(!ED.a)return;await HOOKS.date?.(ED.a.pages[activePageIndex()]);await refreshVaquitaStickers();renderLib()};
 PACKS.unshift({id:'vaquitas',n:'Vaquitas',st:['cow-peluda','cow-rubia','cow-negra','cow-entera','cow-clasica','cow-cencerro','cow-leche','cow-teamuuu','cow-muu','cow-muuy','cow-besos','cow-cita','daisy','heart'],pages:[
  ['Nuestra cita',(W,H)=>({bg:'dots',bgc:'#FBF3E6',els:[tl('Nuestra cita',W,{font:F.dance,fs:48,color:'#7a4a24'}),ST('cow-peluda',W-140,24,110,{r:6}),
    T('Fecha: ____________\nLugar: ____________',46,120,W-190,84,{fs:25,font:F.patrick,color:'#5a3a24'}),
@@ -1116,9 +1123,10 @@ export async function ensureScans(book) {
     if (!SCANS.has(p.scan)) SCANS.set(p.scan, await getPageUrl(p.scan));
   }));
 }
-export function openEditor(book, index, { tab, onBack, onCover } = {}) {
+export function openEditor(book, index, { tab, onBack, onCover, onDate } = {}) {
   HOOKS.back = onBack;
   HOOKS.cover = onCover;
+  HOOKS.date = onDate;
   if (tab) V.libTab = tab;
   openAgenda(book, index);
 }
@@ -1137,6 +1145,17 @@ export function pageSurfaceHTML(p, book) {
 }
 export const pageThumbHTML = (p, book, width) => { const [W, H] = dims(book); return miniPage(p, W, H, width); };
 export const newBlankPage = () => pg('lines');
+// La página de una cita: título, fecha, lugar y la vaquita que ganaron.
+export function newDatePage(book, title, dateText, place, cow) {
+  const [W, H] = dims(book);
+  const size = W * 0.3;
+  const els = [
+    T(title, W * 0.08, H * 0.05, W * 0.84, H * 0.11, { fs: 40, al: 'center', font: 'Caveat, cursive' }),
+    T(place ? `${dateText} · ${place}` : dateText, W * 0.08, H * 0.16, W * 0.84, H * 0.06, { fs: 22, al: 'center' }),
+  ];
+  if (cow) els.push(ST(`vq-${cow}`, W * 0.66, H * 0.68, size, { h: size * 172 / 120, r: 6 }));
+  return pg(book.pageBg || 'lines', els);
+}
 export const forgetScan = (id) => SCANS.delete(id);
 export function deleteImagesOf(book, otherBooks) {
   const ids = (x) => JSON.stringify(x).match(/img_[a-z0-9]+/g) ?? [];

@@ -69,6 +69,7 @@
   <symbol id="i-ig" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.8" cy="7.2" r=".8" fill="currentColor"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
   <symbol id="i-eraser" viewBox="0 0 24 24"><path d="M20 20H8l-5-5 10-10 8 8-6 7"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-8-5-8-11a4.500 4.500 0 0 1 8-2.800A4.500 4.500 0 0 1 20 9c0 6-8 11-8 11z"/></symbol>
 </svg>
   <!-- /iconos-delulu -->
   <main id="app"></main>
@@ -84,6 +85,7 @@
         <button class="btn ghost icon" id="btnUndo" aria-label="Deshacer"><svg class="i"><use href="#i-undo"/></svg></button>
         <button class="btn ghost icon" id="btnRedo" aria-label="Rehacer"><svg class="i"><use href="#i-redo"/></svg></button>
         <button class="btn ghost icon dt" id="btnDraw" aria-label="Dibujo libre"><svg class="i"><use href="#i-pen"/></svg></button>
+        <button class="btn ghost icon dt" id="btnCita" aria-label="Esta página fue una cita" title="Esta página fue una cita"><svg class="i"><use href="#i-heart"/></svg></button>
         <button class="btn ghost icon dt" id="btnSnap" aria-label="Guías de alineación" title="Guías de alineación"><svg class="i"><use href="#i-magnet"/></svg></button>
         <button class="btn ghost icon hide-sm" id="btnView" aria-label="Una o dos páginas"><svg class="i"><use href="#i-spread"/></svg></button>
         <button class="btn ghost icon hide-sm" id="btnZoomOut" aria-label="Alejar"><svg class="i"><use href="#i-minus"/></svg></button>
@@ -104,6 +106,7 @@
       <nav class="dock mobile-only" aria-label="Herramientas">
         <button type="button" class="on" data-click="#btnLibMobile"><svg class="i"><use href="#i-plus"/></svg>Agregar</button>
         <button type="button" data-click="#btnDraw"><svg class="i"><use href="#i-pen"/></svg>Dibujar</button>
+        <button type="button" data-click="#btnCita"><svg class="i"><use href="#i-heart"/></svg>Fue cita</button>
         <button type="button" data-click="#btnPageMenu"><svg class="i"><use href="#i-pages"/></svg>Páginas</button>
         <button type="button" data-click="#btnCoverFromOpen"><svg class="i"><use href="#i-book"/></svg>Portada</button>
       </nav>

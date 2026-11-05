@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { DATE_IDEAS, SOURCE_LABELS, pickIdea } from '../js/date-ideas.js';
-import { MUU_BREEDS, MUU_PINK, muuBreedHead, muuHead } from '../js/cow.js';
+import { MUU_BREEDS, MUU_PINK, muuBreedHead, muuHead, muuMascotHTML, muuSittingInner } from '../js/cow.js';
 import { allowed, parseRequest, suggest } from '../api/muu.js';
 
 const fakeClient = (response, calls = []) => ({
@@ -69,6 +69,16 @@ test('el freno limita los pedidos por hora de cada dirección', () => {
   for (let i = 0; i < 20; i++) assert.equal(allowed(ip, 1000), true);
   assert.equal(allowed(ip, 1000), false);
   assert.equal(allowed(ip, 1000 + 3600001), true);
+});
+
+test('Muu sentada usa la cara y el pelaje del color elegido', () => {
+  for (const b of MUU_BREEDS) {
+    const body = muuSittingInner(b.id);
+    assert.ok(body.includes(muuBreedHead(b.id)), `${b.id}: cara`);
+    assert.ok(!/undefined|NaN/.test(body), `${b.id}: dibujo completo`);
+  }
+  assert.ok(muuMascotHTML('negra').includes(muuSittingInner('negra')), 'la mascota está sentada');
+  assert.equal(muuSittingInner('otra'), muuSittingInner('rosa'), 'un color desconocido vuelve a Muu rosa');
 });
 
 test('Muu cambia de color, pero el ícono de la app sigue rosa', () => {
