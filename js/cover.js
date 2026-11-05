@@ -57,6 +57,30 @@ export function shade(hex, amt) {
 }
 
 // ---------- Modelo ----------
+// La versión 2 son los modelos suaves; delulu y clasica son la versión 1 y siguen disponibles.
+export const COVER_MODELS = [['almohadita', 'Almohadita'], ['cosida', 'Cosida'], ['acolchada', 'Acolchada'], ['delulu', 'Delulu con solapa'], ['clasica', 'Clásica con costura']];
+export const isSoftModel = (model) => ['almohadita', 'cosida', 'acolchada'].includes(model);
+// Cosida cierra con broche y Acolchada con moño: no llevan elástico, y su título va en una etiqueta.
+export const hasNoElastic = (model) => model === 'cosida' || model === 'acolchada';
+export const hasLabel = hasNoElastic;
+export const modelClass = (model) => (isSoftModel(model) ? `model-soft model-${model}` : '');
+const DEFAULT_ELASTIC = '#2457C9';
+const SOFT_CLOSURES = {
+  almohadita: { color: '#FFF8EF', style: 'plano', width: 9 },
+  cosida: { color: '#EFA8B7' },
+  acolchada: { color: '#F6CAD2' },
+};
+// Al estrenar un modelo suave, un elástico que nadie ha cambiado toma el color pastel de ese modelo.
+export function softClosureFor(model, elastic) {
+  return SOFT_CLOSURES[model] && elastic.color === DEFAULT_ELASTIC ? { ...elastic, ...SOFT_CLOSURES[model] } : elastic;
+}
+const LABEL_INK = '#54433D';
+// El grabado casi no se nota sobre la tela mullida de Almohadita; si no eligieron otro efecto, va impreso.
+export function softTitleFor(model, title, leather) {
+  if (model !== 'almohadita' || title.fx !== 'grabado') return title;
+  return { ...title, fx: 'impreso', color: luminance(leather) > 0.35 ? LABEL_INK : '#FFF8EF' };
+}
+
 export const newCharm = (shape, letter = 'A') => ({
   id: newCharmId(), shape, material: 'oro', color: '#c4878c', size: 1, letter: (letter[0] || 'A').toUpperCase(),
 });
@@ -111,9 +135,11 @@ export function migrateBook(book) {
 export function surpriseCover(cover) {
   const pick = (list) => list[Math.floor(Math.random() * list.length)];
   const shapes = Object.keys(CHARM_PHOTOS);
-  const orient = pick(['horizontal', 'horizontal', 'vertical']);
+  const model = pick(COVER_MODELS)[0];
+  const orient = hasNoElastic(model) ? 'horizontal' : pick(['horizontal', 'horizontal', 'vertical']);
   return {
     ...cover,
+    model,
     color: pick(BASE_LEATHERS)[2],
     texture: pick(TEXTURES)[0],
     finish: 'mate',
@@ -260,7 +286,11 @@ function titleHTML(book) {
   if (!t.show || !book.title) return '';
   const fs = Math.min(46, Math.max(26, 560 / Math.max(8, book.title.length))) * t.size;
   const font = t.font.replace(/"/g, "'");
-  return `<div class="lea-title" style="top:${t.y * 100}%;font-family:${font};font-style:${t.italic ? 'italic' : 'normal'};font-size:${unit(fs)};${textEffect(t.fx, t.color, c.color)}">${esc(book.title)}</div>`;
+  const label = hasLabel(c.model);
+  const cls = label ? ` on-label label-${c.model}` : isSoftModel(c.model) ? ' soft' : '';
+  // Sobre la etiqueta clara, el texto siempre va impreso para que se lea.
+  const ink = label ? `color:${LABEL_INK};` : textEffect(t.fx, t.color, c.color);
+  return `<div class="lea-title${cls}" style="top:${t.y * 100}%;font-family:${font};font-style:${t.italic ? 'italic' : 'normal'};font-size:${unit(label ? fs * 0.82 : fs)};${ink}">${esc(book.title)}</div>`;
 }
 function initialsHTML(c) {
   const txt = (c.initials.text || '').trim().toUpperCase().slice(0, 3);
@@ -273,14 +303,28 @@ export function coverFaceHTML(book) {
   const photo = c.photoId
     ? `<img class="lea-photo" data-id="${esc(c.photoId)}" alt="" draggable="false" style="opacity:${c.photoOp};mix-blend-mode:${c.photoBlend}">`
     : '';
-  const model = c.model === 'delulu'
-    ? '<div class="lea-flapback"></div><div class="lea-flap"></div><i class="lea-rivet t"></i><i class="lea-rivet b"></i>'
-    : '<div class="lea-spine"></div><div class="lea-stitch"></div>';
+  const model = {
+    delulu: '<div class="lea-flapback"></div><div class="lea-flap"></div><i class="lea-rivet t"></i><i class="lea-rivet b"></i>',
+    almohadita: '<div class="lea-puff"></div><div class="lea-crease"></div>',
+    cosida: '<div class="lea-puff light"></div><div class="lea-stitch soft"></div>',
+    acolchada: '<div class="lea-quilt"></div><div class="lea-puff light"></div>',
+  }[c.model] ?? '<div class="lea-spine"></div><div class="lea-stitch"></div>';
   return `${photo}${leatherLayers(c)}${model}${titleHTML(book)}${initialsHTML(c)}${finishLayers(c)}`;
 }
 
 export function backFaceHTML(book) {
   const c = book.cover, e = c.elastic, t = unit(e.width);
+  if (c.model === 'cosida') return `${leatherLayers(c)}<div class="lea-puff light"></div><div class="lea-stitch soft"></div>${finishLayers(c)}`;
+  if (c.model === 'acolchada') {
+    return `${leatherLayers(c)}<div class="lea-quilt"></div><div class="lea-puff light"></div>
+      <div class="lea-band" style="left:0;right:0;top:calc(${e.pos * 100}% - ${unit(13)});height:${unit(26)};background:${e.color}"></div>${finishLayers(c)}`;
+  }
+  if (c.model === 'almohadita') {
+    const across = e.orient === 'horizontal'
+      ? `left:0;right:0;top:calc(${e.pos * 100}% - ${t} / 2);height:${t}`
+      : `top:0;bottom:0;left:calc(${(1 - e.pos) * 100}% - ${t} / 2);width:${t}`;
+    return `${leatherLayers(c)}<div class="lea-puff"></div><div class="lea-band" style="${across};background:${bandFill(e, e.orient === 'horizontal')}"></div>${finishLayers(c)}`;
+  }
   const strip = e.orient === 'horizontal'
     ? `left:0;right:0;top:calc(${e.pos * 100}% - ${t} / 2);height:${t}`
     : `top:0;bottom:0;left:calc(${(1 - e.pos) * 100}% - ${t} / 2);width:${t}`;
@@ -295,7 +339,28 @@ export function bandFill(e, horizontal) {
   return `linear-gradient(${deg}deg,${shade(c, -0.45)},${shade(c, 0.25)} 45%,${c} 60%,${shade(c, -0.45)})`;
 }
 
+const HEART_PATH = 'M20 34C6 25 4 14 11 10c5-3 8 0 9 4 1-4 4-7 9-4 7 4 5 15-9 24z';
+
+// Broche de Cosida: una solapa redonda con un botón de corazón.
+const claspHTML = (c) => `<div class="lea-clasp" style="top:calc(${c.elastic.pos * 100}% - ${unit(54)});background:${shade(c.color, -0.12)}">
+    <span class="lea-clasp-button"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="${HEART_PATH}" fill="${c.elastic.color}"/></svg></span>
+  </div>`;
+
+// Moño de Acolchada: la cinta rodea la libreta y se anuda al centro.
+const ribbonHTML = (c) => {
+  const color = c.elastic.color, deep = shade(color, -0.12);
+  return `<div class="lea-ribbon" style="top:calc(${c.elastic.pos * 100}% - ${unit(13)});background:${color}"></div>
+    <div class="lea-bow" style="top:calc(${c.elastic.pos * 100}% - ${unit(45)})"><svg viewBox="0 0 170 110" aria-hidden="true">
+      <path d="M79 52L52 104l18-7 8 13 12-55zM91 52l27 52-18-7-8 13-12-55z" fill="${deep}"/>
+      <path d="M85 44C62 6 14 8 10 42c-3 34 50 34 75 2zM85 44c23-38 71-36 75-2 3 34-50 34-75 2z" fill="${deep}"/>
+      <path d="M85 44C66 18 28 20 25 42c-2 22 40 22 60 2zM85 44c19-26 57-24 60-2 2 22-40 22-60 2z" fill="${color}"/>
+      <circle cx="85" cy="44" r="15" fill="${color}"/><circle cx="85" cy="44" r="15" fill="none" stroke="${deep}" stroke-width="3"/>
+    </svg></div>`;
+};
+
 export function bandHTML(c) {
+  if (c.model === 'cosida') return claspHTML(c);
+  if (c.model === 'acolchada') return ribbonHTML(c);
   const e = c.elastic, t = unit(e.width), horizontal = e.orient === 'horizontal';
   const box = horizontal
     ? `left:${unit(-8)};right:${unit(-14)};top:calc(${e.pos * 100}% - ${t} / 2);height:${t}`
@@ -308,9 +373,12 @@ export function charmsHTML(c) {
   const e = c.elastic, offsets = [0, -22, 22, -42, 42, -62];
   return c.charms.map((ch, i) => {
     const s = 46 * (ch.size || 1), off = offsets[i % 6];
-    const vertical = e.orient !== 'horizontal';
-    const left = vertical ? `calc(${e.pos * 100}% + ${unit(off * 0.6 - s / 2)})` : `calc(50% + ${unit(off - s / 2)})`;
-    const top = vertical ? `calc(42% + ${unit(i * 8 - s * 0.12)})` : `calc(${e.pos * 100}% + ${unit(-4 - s * 0.12)})`;
+    const vertical = e.orient !== 'horizontal' && !hasNoElastic(c.model);
+    // En Cosida los charms cuelgan del broche, y en Acolchada, del moño.
+    const center = c.model === 'cosida' ? 76 : 50;
+    const drop = c.model === 'cosida' ? 44 : c.model === 'acolchada' ? 12 : -4;
+    const left = vertical ? `calc(${e.pos * 100}% + ${unit(off * 0.6 - s / 2)})` : `calc(${center}% + ${unit(off - s / 2)})`;
+    const top = vertical ? `calc(42% + ${unit(i * 8 - s * 0.12)})` : `calc(${e.pos * 100}% + ${unit(drop - s * 0.12)})`;
     return `<div class="lea-charm" style="left:${left};top:${top};width:${unit(s)};--tilt:${i % 2 ? 4 : -5}deg">${charmSVG(ch)}</div>`;
   }).join('');
 }
@@ -357,7 +425,7 @@ export const charmName = (shape) =>
 
 // Libreta cerrada y plana, para el estante.
 export function miniBookHTML(book) {
-  return `<div class="cover-box"><div class="mini-book" style="aspect-ratio:${book.aspect || 0.72}">
+  return `<div class="cover-box"><div class="mini-book ${modelClass(book.cover.model)}" style="aspect-ratio:${book.aspect || 0.72}">
     <i class="mini-edge r"></i><i class="mini-edge b"></i>
     <div class="lea" style="background-color:${book.cover.color}">${coverFaceHTML(book)}</div>
     ${bandHTML(book.cover)}${charmsHTML(book.cover)}

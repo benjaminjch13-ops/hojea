@@ -1,5 +1,5 @@
 // Libro 3D con CSS. Todo se deriva de un solo número: `pos`, cuántas hojas se han pasado.
-import { backFaceHTML, bandFill, bandHTML, charmsHTML, coverFaceHTML, leatherLayers } from './cover.js';
+import { backFaceHTML, bandFill, bandHTML, charmsHTML, coverFaceHTML, isSoftModel, leatherLayers } from './cover.js';
 import { getPageUrl } from './db.js';
 import { pageSurfaceHTML } from './delulu.js';
 import { esc } from './ui.js';
@@ -154,6 +154,8 @@ export class Book3D {
   // Todo lo que muestra el cuero, sin tocar las páginas del medio.
   paintLeather() {
     const b = this.book, c = b.cover, e = c.elastic;
+    this.root.classList.remove('model-soft', 'model-almohadita', 'model-cosida', 'model-acolchada');
+    if (isSoftModel(c.model)) this.root.classList.add('model-soft', `model-${c.model}`);
     this.strap.innerHTML = bandHTML(c) + charmsHTML(c);
     const firstLine = c.title.show ? b.title : '';
     this.spine.style.backgroundColor = c.color;
@@ -163,7 +165,11 @@ export class Book3D {
     const strip = (el, css) => { el.innerHTML = `<i class="edge-band" style="${css};background:${bandFill(e, horizontal)}"></i>`; };
     const across = `left:0;right:0;top:calc(${e.pos * 100}% - ${u(e.width)} / 2);height:${u(e.width)}`;
     const along = `top:0;bottom:0;left:calc(${e.pos * 100}% - ${u(e.width)} / 2);width:${u(e.width)}`;
-    if (horizontal) { strip(this.edges.r, across); this.edges.br.innerHTML = ''; }
+    if (c.model === 'cosida') { this.edges.r.innerHTML = ''; this.edges.br.innerHTML = ''; }
+    else if (c.model === 'acolchada') {
+      this.edges.r.innerHTML = `<i class="edge-band" style="left:0;right:0;top:calc(${e.pos * 100}% - ${u(13)});height:${u(26)};background:${e.color}"></i>`;
+      this.edges.br.innerHTML = '';
+    } else if (horizontal) { strip(this.edges.r, across); this.edges.br.innerHTML = ''; }
     else { strip(this.edges.br, along); this.edges.r.innerHTML = ''; }
     this.ribbon.style.display = c.ribbon === 'none' ? 'none' : '';
     this.ribbon.style.background = c.ribbon && c.ribbon !== 'none' ? c.ribbon : '#b5646d';

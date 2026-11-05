@@ -1,7 +1,7 @@
 // Editor de páginas de Delulu Journal V2 (repositorio delulusV2), adaptado a Hojea.
 // Lo de abajo de "Código de Delulu" es el original; este encabezado lo conecta con el almacenamiento de Hojea.
 import { confirmDialog, toast as showToast } from './ui.js';
-import { COW_SPOTS, charmSVG, engraveColor, paintFur } from './cover.js';
+import { COW_SPOTS, charmSVG, engraveColor, hasLabel, hasNoElastic, isSoftModel, paintFur } from './cover.js';
 import { cowStickers } from './cow.js';
 import { listDates } from './dates.js';
 import { VAQUITAS, VAQ_VIEWBOX, vaquitaCow } from './vaquitas.js';
@@ -1030,7 +1030,23 @@ function coverPattern(ctx,p,W,H){const line=(x1,y1,x2,y2)=>{ctx.moveTo(x1,y1);ct
   if(p==='vaca'){const k=W/560,step=400*k;ctx.fillStyle='#231a15';for(let oy=0;oy<H;oy+=step)for(let ox=0;ox<W;ox+=step){ctx.save();ctx.translate(ox,oy);ctx.scale(k,k);for(const d of COW_SPOTS)ctx.fill(new Path2D(d));ctx.restore()}}
   if(p==='cuadros'){ctx.fillStyle='rgba(0,0,0,.09)';for(let x=0;x<W;x+=34)ctx.fillRect(x,0,2,H);for(let y=0;y<H;y+=34)ctx.fillRect(0,y,W,2)}
   ctx.restore()}
-function drawBand(ctx,a,W,H,back){const e=a.cover.elastic,t=e.width||9,c=e.color,vert=e.orient!=='horizontal',pos=e.pos??(vert?.84:.6);
+function drawClosure(ctx,a,W,H,back){const m=a.cover.model,e=a.cover.elastic,y=H*(e.pos??.6);
+  if(m==='cosida'){if(back)return;const h=W*.19,fill=shade(a.cover.color,-.12);ctx.save();shadow(ctx,8,3,.3);rr(ctx,W*.56,y-h/2,W*.46,h,[h/2,0,0,h/2]);ctx.fillStyle=fill;ctx.fill();noShadow(ctx);
+    ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);rr(ctx,W*.572,y-h/2+6,W*.46,h-12,[(h-12)/2,0,0,(h-12)/2]);ctx.stroke();ctx.setLineDash([]);
+    const cx=W*.68,r=h*.3;ctx.fillStyle='#FFF8EF';ctx.beginPath();ctx.arc(cx,y,r,0,7);ctx.fill();ctx.fillStyle=e.color;softHeart(ctx,cx,y,r*.56);ctx.restore();return}
+  const h=W*.046;ctx.save();shadow(ctx,4,2,.22);ctx.fillStyle=e.color;ctx.fillRect(-4,y-h/2,W+8,h);noShadow(ctx);
+  if(!back){const deep=shade(e.color,-.12),cx=W*.5,s=W*.15;ctx.fillStyle=deep;ctx.beginPath();ctx.moveTo(cx-3,y);ctx.lineTo(cx-s*.5,y+s*.72);ctx.lineTo(cx-s*.1,y+s*.62);ctx.lineTo(cx+3,y+2);ctx.moveTo(cx+3,y);ctx.lineTo(cx+s*.5,y+s*.72);ctx.lineTo(cx+s*.1,y+s*.62);ctx.lineTo(cx-3,y+2);ctx.fill();
+    for(const d of[-1,1]){ctx.fillStyle=deep;ctx.beginPath();ctx.ellipse(cx+d*s*.5,y,s*.52,s*.28,0,0,7);ctx.fill();ctx.fillStyle=e.color;ctx.beginPath();ctx.ellipse(cx+d*s*.44,y,s*.34,s*.15,0,0,7);ctx.fill()}
+    ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(cx,y,s*.15,0,7);ctx.fill();ctx.strokeStyle=deep;ctx.lineWidth=1.5;ctx.stroke()}
+  ctx.restore()}
+function softHeart(ctx,x,y,s){ctx.beginPath();ctx.moveTo(x,y+s);ctx.bezierCurveTo(x-s*1.5,y,x-s*.7,y-s,x,y-s*.25);ctx.bezierCurveTo(x+s*.7,y-s,x+s*1.5,y,x,y+s);ctx.fill()}
+function drawSoftFace(ctx,c,W,H){const puff=c.model==='almohadita'?1:.6;
+  const glow=ctx.createRadialGradient(W*.24,H*.12,0,W*.24,H*.12,W*.75);glow.addColorStop(0,`rgba(255,255,255,${.3*puff})`);glow.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+  const low=ctx.createLinearGradient(0,0,W,H);low.addColorStop(.55,'rgba(60,30,20,0)');low.addColorStop(1,`rgba(60,30,20,${.18*puff})`);ctx.fillStyle=low;ctx.fillRect(0,0,W,H);
+  if(c.model==='cosida'){ctx.strokeStyle='rgba(255,255,255,.62)';ctx.lineWidth=2;ctx.setLineDash([7,5]);ctx.lineCap='round';rr(ctx,W*.04,W*.04,W*.92,H-W*.08,W*.07);ctx.stroke();ctx.setLineDash([]);ctx.lineCap='butt'}
+  if(c.model==='acolchada'){const step=W*.17;for(let i=-H;i<W+H;i+=step){for(const [d,col,off] of[[1,'rgba(60,30,20,.2)',0],[-1,'rgba(60,30,20,.2)',0],[1,'rgba(255,255,255,.2)',1.5],[-1,'rgba(255,255,255,.2)',1.5]]){ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(i+off,0);ctx.lineTo(i+off+d*H,H);ctx.stroke()}}}
+  const el=c.elements?.[0];if(el?.onLabel&&!c.__back){const lines=Math.max(1,Math.ceil(el.text.length*el.fs*.5/el.w)),h=lines*el.fs*1.25+el.fs*.9;ctx.save();shadow(ctx,5,2,.14);rr(ctx,W*.16,el.y-el.fs*.45,W*.68,h,c.model==='acolchada'?h/2:W*.05);ctx.fillStyle='#FFF8EF';ctx.fill();noShadow(ctx);if(c.model==='cosida'){ctx.strokeStyle='#F6CAD2';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);rr(ctx,W*.175,el.y-el.fs*.45+W*.015,W*.65,h-W*.03,W*.04);ctx.stroke();ctx.setLineDash([])}ctx.restore()}}
+function drawBand(ctx,a,W,H,back){if(hasNoElastic(a.cover.model))return drawClosure(ctx,a,W,H,back);const e=a.cover.elastic,t=e.width||9,c=e.color,vert=e.orient!=='horizontal',pos=e.pos??(vert?.84:.6);
   let x,y,w,h;if(vert){x=(back?W*(1-pos):W*pos)-t/2;y=-8;w=t;h=H+20}else{x=back?-14:-8;y=H*pos-t/2;w=W+22;h=t}
   const g=vert?ctx.createLinearGradient(x,0,x+t,0):ctx.createLinearGradient(0,y,0,y+t);
   const st=e.style==='plano'?[[0,shade(c,-.25)],[.2,c],[.8,c],[1,shade(c,-.25)]]:[[0,shade(c,-.45)],[.45,shade(c,.25)],[.6,c],[1,shade(c,-.45)]];st.forEach(([p,col])=>g.addColorStop(p,col));
@@ -1039,7 +1055,8 @@ function drawBand(ctx,a,W,H,back){const e=a.cover.elastic,t=e.width||9,c=e.color
   if(e.style==='plano'){ctx.strokeStyle='rgba(255,255,255,.4)';ctx.setLineDash([3,3]);ctx.lineWidth=1;ctx.beginPath();vert?(ctx.moveTo(x+t/2,y),ctx.lineTo(x+t/2,y+h)):(ctx.moveTo(x,y+t/2),ctx.lineTo(x+w,y+t/2));ctx.stroke()}
   ctx.restore()}
 async function drawCharms(ctx,a,W,H){const e=a.cover.elastic,list=a.cover.charms||[],offs=[0,-22,22,-42,42,-62],vert=e.orient!=='horizontal';
-  for(let i=0;i<list.length;i++){const c=list[i],s=46*(c.size||1);const cx=vert?W*(e.pos??.84)+offs[i%6]*.6:W*.5+offs[i%6];const cy=vert?H*.42+i*8:H*(e.pos??.6)-4;
+  const model=a.cover.model,noEl=hasNoElastic(model);
+  for(let i=0;i<list.length;i++){const c=list[i],s=46*(c.size||1),across=vert&&!noEl;const cx=across?W*(e.pos??.84)+offs[i%6]*.6:W*(model==='cosida'?.68:.5)+offs[i%6];const cy=across?H*.42+i*8:H*(e.pos??.6)+(model==='cosida'?W*.08:noEl?W*.02:-4);
     const img=await loadImg(svgURL(charmSVG(c).replace("<svg ",`<svg width="${Math.ceil(s*ctx.__s)}" height="${Math.ceil(s*ctx.__s*1.5)}" `)));if(!img)continue;
     ctx.save();ctx.translate(cx,cy-s*.12);ctx.rotate((i%2?4:-5)*Math.PI/180);ctx.drawImage(img,-s/2,0,s,s*1.5);ctx.restore()}}
 async function renderCover(ctx,a,W,H,back){const c=a.cover;ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();
@@ -1053,6 +1070,7 @@ async function renderCover(ctx,a,W,H,back){const c=a.cover;ctx.save();ctx.beginP
     ctx.save();ctx.shadowColor='rgba(0,0,0,.42)';ctx.shadowBlur=9*ctx.__s;ctx.shadowOffsetX=3*ctx.__s;rr(ctx,-20,-4,W*.86+20,H+8,[0,W*.06,W*.06,0]);ctx.fillStyle=c.color;ctx.fill();ctx.restore();
     ctx.save();rr(ctx,-20,-4,W*.86+20,H+8,[0,W*.06,W*.06,0]);ctx.clip();await texFill(ctx,c.texture||'liso','overlay',c.texture==='liso'?.5:.85,W,H);coverPattern(ctx,c.pattern,W,H);ctx.restore();
     for(const y of[H*.045,H*.955]){const r=W*.011,g=ctx.createRadialGradient(W*.027-r*.3,y-r*.3,0,W*.027,y,r);g.addColorStop(0,'#9aa0a6');g.addColorStop(1,'#2c2f33');ctx.fillStyle=g;ctx.beginPath();ctx.arc(W*.027,y,r,0,7);ctx.fill()}}
+  else if(isSoftModel(c.model)){drawSoftFace(ctx,{...c,__back:back},W,H)}
   else{ctx.strokeStyle='rgba(255,240,220,.45)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);rr(ctx,7,7,W-14,H-14,[6,10,10,6]);ctx.stroke();ctx.setLineDash([])}ctx.restore();
   if(isTornasol(c)){ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.6;let g;
     if(ctx.createConicGradient){g=ctx.createConicGradient(3.5,W*.3,H*.3);[['#ffd6ec',0],['#d6ecff',.25],['#dcffe6',.5],['#fff4c6',.75],['#ffd6ec',1]].forEach(([col,p])=>g.addColorStop(p,col))}else{g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#ffd6ec');g.addColorStop(.5,'#d6ecff');g.addColorStop(1,'#fff4c6')}
@@ -1173,7 +1191,9 @@ export async function prepareExport(book) {
   };
   if (t.show && book.title) {
     const fs = Math.min(46, Math.max(26, 560 / Math.max(8, book.title.length))) * t.size;
-    elements.push({ id: 'title', type: 'text', text: book.title, x: W * 0.08, y: H * t.y, w: W * 0.7, h: fs * 3, r: 0, font: t.font, fs, it: t.italic, al: 'center', ...textFx(t.fx) });
+    const onLabel = hasLabel(c.model);
+    const box = onLabel ? { x: W * 0.18, w: W * 0.64, fs: fs * 0.82, onLabel, fx: '', color: '#54433D' } : { x: isSoftModel(c.model) ? W * 0.12 : W * 0.08, w: isSoftModel(c.model) ? W * 0.76 : W * 0.7, fs, ...textFx(t.fx) };
+    elements.push({ id: 'title', type: 'text', text: book.title, y: H * t.y, h: fs * 3, r: 0, font: t.font, it: t.italic, al: 'center', ...box });
   }
   const initials = (c.initials.text || '').trim().toUpperCase().slice(0, 3);
   if (initials) elements.push({ id: 'ini', type: 'text', text: initials, x: W * 0.6, y: H * 0.875, w: W * 0.2, h: 40, r: 0, font: '"Bodoni Moda", serif', fs: 22, al: 'center', ...textFx(c.initials.fx) });

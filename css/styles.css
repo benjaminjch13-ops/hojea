@@ -230,6 +230,38 @@ button:disabled { cursor: default; opacity: .4; }
 .lea-spine { position: absolute; left: 0; top: 0; bottom: 0; width: 7%; background: linear-gradient(90deg, rgba(0, 0, 0, .35), rgba(255, 255, 255, .06) 60%, rgba(0, 0, 0, .15)); pointer-events: none; }
 .lea-stitch { position: absolute; inset: calc(var(--u) * 7); border: calc(var(--u) * 1.5) dashed rgba(255, 240, 220, .45); border-radius: calc(var(--u) * 6) calc(var(--u) * 10) calc(var(--u) * 10) calc(var(--u) * 6); pointer-events: none; }
 .lea-stitch.back { border-radius: calc(var(--u) * 10) calc(var(--u) * 6) calc(var(--u) * 6) calc(var(--u) * 10); }
+/* Versión 2: modelos suaves. Las medidas usan --u para servir igual en el inicio y en 3D. */
+.mini-book.model-soft { border-radius: calc(var(--u) * 52) calc(var(--u) * 70) calc(var(--u) * 70) calc(var(--u) * 52); filter: drop-shadow(5px 14px 16px rgba(84, 67, 61, .34)); }
+.mini-book.model-soft .lea { box-shadow: none; }
+.mini-book.model-soft .mini-edge.r { top: 11%; bottom: 11%; right: -2%; width: 2.6%; border-radius: 0 6px 6px 0; }
+.mini-book.model-soft .mini-edge.b { left: 11%; right: 11%; bottom: -1.100%; border-radius: 0 0 6px 6px; }
+.model-soft .face.lea { box-shadow: none; }
+.model-soft .face.front { border-radius: 2px calc(var(--u) * 70) calc(var(--u) * 70) 2px; }
+.model-soft .face.back { border-radius: calc(var(--u) * 70) 2px 2px calc(var(--u) * 70); }
+.model-soft .face.front.lea { border-radius: calc(var(--u) * 40) calc(var(--u) * 70) calc(var(--u) * 70) calc(var(--u) * 40); }
+.model-soft .face.back.lea { border-radius: calc(var(--u) * 70) calc(var(--u) * 40) calc(var(--u) * 40) calc(var(--u) * 70); }
+.model-soft .front .b-sheet { border-radius: 0 calc(var(--u) * 58) calc(var(--u) * 58) 0; }
+.model-soft .back .b-sheet { border-radius: calc(var(--u) * 58) 0 0 calc(var(--u) * 58); }
+.model-soft > .edge { top: calc(var(--h) / -2 + var(--u) * 60); height: calc(var(--h) - var(--u) * 120); }
+.model-soft > .edge-br { left: calc(var(--u) * 30); width: calc(var(--w) - var(--u) * 90); }
+.model-soft > .edge-bl { left: calc(var(--w) * -1 + var(--u) * 60); width: calc(var(--w) - var(--u) * 90); }
+.model-soft > .spine3d { top: calc(var(--h) / -2 + var(--u) * 40); height: calc(var(--h) - var(--u) * 80); }
+.lea-puff { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(85% 50% at 24% 10%, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0) 72%), linear-gradient(135deg, rgba(60, 30, 20, 0) 55%, rgba(60, 30, 20, .2)); box-shadow: inset 0 0 calc(var(--u) * 34) calc(var(--u) * 5) rgba(60, 30, 20, .26), inset 0 calc(var(--u) * 5) calc(var(--u) * 7) rgba(255, 255, 255, .2); }
+.lea-puff.light { background: radial-gradient(85% 50% at 24% 10%, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 72%), linear-gradient(135deg, rgba(60, 30, 20, 0) 60%, rgba(60, 30, 20, .1)); box-shadow: inset 0 0 calc(var(--u) * 26) calc(var(--u) * 2) rgba(60, 30, 20, .16); }
+.lea-crease { position: absolute; left: calc(var(--u) * 44); top: 0; bottom: 0; width: calc(var(--u) * 28); background: linear-gradient(90deg, rgba(60, 30, 20, 0), rgba(60, 30, 20, .26) 45%, rgba(255, 255, 255, .22) 62%, rgba(255, 255, 255, 0)); pointer-events: none; }
+.lea-stitch.soft { inset: calc(var(--u) * 24); border: calc(var(--u) * 5) dashed rgba(255, 255, 255, .62); border-radius: calc(var(--u) * 46); }
+.lea-quilt { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(45deg, transparent 0 calc(var(--u) * 64), rgba(60, 30, 20, .2) calc(var(--u) * 64) calc(var(--u) * 67), rgba(255, 255, 255, .24) calc(var(--u) * 67) calc(var(--u) * 70)), repeating-linear-gradient(-45deg, transparent 0 calc(var(--u) * 64), rgba(60, 30, 20, .2) calc(var(--u) * 64) calc(var(--u) * 67), rgba(255, 255, 255, .24) calc(var(--u) * 67) calc(var(--u) * 70)); }
+.lea-title.soft { left: 12%; width: 76%; }
+.lea-title.on-label { left: 16%; width: 68%; padding: calc(var(--u) * 26) calc(var(--u) * 14); box-sizing: border-box; background: #FFF8EF; box-shadow: 0 calc(var(--u) * 4) calc(var(--u) * 10) rgba(84, 67, 61, .2); }
+.lea-title.label-cosida { border-radius: calc(var(--u) * 40); outline: calc(var(--u) * 3.500) dashed #F6CAD2; outline-offset: calc(var(--u) * -14); }
+.lea-title.label-acolchada { border-radius: calc(var(--u) * 80); }
+.lea-clasp { position: absolute; right: calc(var(--u) * -8); width: calc(var(--u) * 240); height: calc(var(--u) * 108); border-radius: calc(var(--u) * 54) 0 0 calc(var(--u) * 54); box-shadow: calc(var(--u) * -3) calc(var(--u) * 6) calc(var(--u) * 12) rgba(60, 30, 20, .28); z-index: 3; pointer-events: none; }
+.lea-clasp::before { content: ""; position: absolute; inset: calc(var(--u) * 11) 0 calc(var(--u) * 11) calc(var(--u) * 11); border: calc(var(--u) * 4) dashed rgba(255, 255, 255, .58); border-right: 0; border-radius: calc(var(--u) * 44) 0 0 calc(var(--u) * 44); }
+.lea-clasp-button { position: absolute; left: calc(var(--u) * 32); top: calc(var(--u) * 22); display: grid; place-items: center; width: calc(var(--u) * 64); height: calc(var(--u) * 64); border-radius: 50%; background: #FFF8EF; box-shadow: 0 calc(var(--u) * 3) calc(var(--u) * 6) rgba(60, 30, 20, .3); }
+.lea-clasp-button svg { display: block; width: 62%; height: auto; }
+.lea-ribbon { position: absolute; left: calc(var(--u) * -6); right: calc(var(--u) * -8); height: calc(var(--u) * 26); box-shadow: 0 calc(var(--u) * 4) calc(var(--u) * 7) rgba(60, 30, 20, .22); z-index: 3; pointer-events: none; }
+.lea-bow { position: absolute; left: calc(50% - var(--u) * 85); width: calc(var(--u) * 170); z-index: 3; pointer-events: none; filter: drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 4) rgba(60, 30, 20, .28)); }
+.lea-bow svg { display: block; width: 100%; height: auto; overflow: visible; }
 .lea-title { position: absolute; left: 8%; width: 70%; line-height: 1.1; text-align: center; overflow-wrap: anywhere; pointer-events: none; }
 .lea-initials { position: absolute; left: 60%; width: 20%; top: 87.5%; font-family: "Bodoni Moda", Georgia, serif; text-align: center; pointer-events: none; }
 .lea-band { position: absolute; pointer-events: none; }

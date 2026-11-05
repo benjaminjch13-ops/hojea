@@ -2,8 +2,8 @@
 import { Book3D } from './book3d.js';
 import { CHARM_PHOTOS } from './charm-photos.js';
 import {
-  CHARM_SHAPES, COW_PRESETS, ELASTICS, FINISHES, LEATHERS, MATERIALS, MAX_CHARMS, PATTERN_NAMES, RIBBONS,
-  TEXT_EFFECTS, TEXTURES, TITLE_FONTS, charmName, charmSVG, newCharm, surpriseCover,
+  CHARM_SHAPES, COVER_MODELS, COW_PRESETS, ELASTICS, FINISHES, LEATHERS, MATERIALS, MAX_CHARMS, PATTERN_NAMES, RIBBONS,
+  TEXT_EFFECTS, TEXTURES, TITLE_FONTS, charmName, charmSVG, hasNoElastic, newCharm, softClosureFor, softTitleFor, surpriseCover,
 } from './cover.js';
 import * as db from './db.js';
 import { esc, icon, toast } from './ui.js';
@@ -30,7 +30,7 @@ function panelCuero(c) {
     : '';
   const presets = `<div class="chips">${COW_PRESETS.map((p) => `<button type="button" class="chip cow-chip" data-preset="${p.id}">${esc(p.name)}</button>`).join('')}</div>`;
   return field('Libretas de vaquita', presets)
-    + field('Modelo', chips('model', [['delulu', 'Delulu con solapa'], ['clasica', 'Clásica con costura']], c.model))
+    + field('Modelo', chips('model', COVER_MODELS, c.model))
     + field('Color', swatches('color', LEATHERS, c.color))
     + field('Textura', chips('texture', TEXTURES, c.texture))
     + field('Acabado', chips('finish', FINISHES, c.finish))
@@ -45,6 +45,11 @@ function panelCierre(c) {
       <button type="button" class="swatch none" data-set="ribbon" data-v="none" aria-label="Sin cinta" title="Sin cinta" aria-pressed="${c.ribbon === 'none'}"></button>
       ${RIBBONS.map((col) => `<button type="button" class="swatch" data-set="ribbon" data-v="${col}" style="background:${col}" aria-label="Cinta ${col}" aria-pressed="${c.ribbon === col || (!c.ribbon && col === RIBBONS[0])}"></button>`).join('')}
     </div>`;
+  if (hasNoElastic(c.model)) {
+    return field(c.model === 'cosida' ? 'Color del corazón del broche' : 'Color del moño', swatches('elastic.color', ELASTICS, e.color))
+      + range('Posición', 'elastic.pos', 25, 80, e.pos, 100)
+      + field('Cinta marcapáginas', ribbon);
+  }
   return field('Color del elástico', swatches('elastic.color', ELASTICS, e.color))
     + field('Material', chips('elastic.style', [['cordon', 'Cordón redondo'], ['plano', 'Cinta plana'], ['trenzado', 'Trenzado']], e.style))
     + field('Orientación', chips('elastic.orient', [['horizontal', 'Horizontal'], ['vertical', 'Vertical']], e.orient))
@@ -146,6 +151,12 @@ export async function renderCoverEditor(app, book, { drop = false, fresh = false
     const last = keys.pop();
     keys.reduce((o, k) => o[k], book.cover)[last] = value;
     if (path === 'elastic.orient') book.cover.elastic.pos = value === 'horizontal' ? 0.45 : 0.84;
+    if (path === 'model') {
+      const elastic = softClosureFor(value, book.cover.elastic);
+      // Una etiqueta o un moño necesitan su cinta atravesada, aunque el elástico fuera vertical.
+      book.cover.elastic = hasNoElastic(value) && elastic.orient !== 'horizontal' ? { ...elastic, orient: 'horizontal', pos: 0.62 } : elastic;
+      book.cover.title = softTitleFor(value, book.cover.title, book.cover.color);
+    }
   };
   let touched = false;
   const changed = (repaint = true) => {
