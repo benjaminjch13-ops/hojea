@@ -138,7 +138,10 @@ export async function homeHTML(books) {
       </div>
       <div class="home-head-end">
         ${muuMascotHTML(muuFigure(breed, costume), !!costume)}
-        <button class="icon-btn" data-theme aria-label="Cambiar a Muu y el fondo" title="Cambiar a Muu y el fondo">${icon('palette')}</button>
+        <div class="home-head-tools">
+          <button class="icon-btn" data-theme aria-label="Cambiar a Muu y el fondo" title="Cambiar a Muu y el fondo">${icon('palette')}</button>
+          <button class="icon-btn sync-btn" data-sync aria-label="Sincronizar con tu pareja" title="Sincronizar con tu pareja">${icon('cloud')}<i class="sync-dot"></i></button>
+        </div>
       </div>
     </header>
     ${recent ? `<a class="home-continue" href="#/libro/${recent.id}">

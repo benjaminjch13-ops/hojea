@@ -40,7 +40,30 @@ export async function listBooks() {
   return books.map(migrateBook).sort((a, b) => b.createdAt - a.createdAt);
 }
 export const getBook = async (id) => migrateBook(await run('books', 'readonly', (s) => s.get(id)));
-export const saveBook = (book) => { book.updated = Date.now(); return run('books', 'readwrite', (s) => s.put(book)); };
+export const saveBook = async (book) => {
+  book.updated = Date.now();
+  const result = await run('books', 'readwrite', (s) => s.put(book));
+  notify('book', book.id);
+  return result;
+};
+
+// La sincronización escucha lo que se cambia aquí; lo que llega del otro dispositivo usa las versiones "Raw".
+const listeners = [];
+export const onLocalChange = (fn) => { listeners.push(fn); };
+const notify = (kind, id) => listeners.forEach((fn) => fn({ kind, id }));
+const metaDoc = (key) => {
+  if (key.startsWith('cita:')) return ['date', key.slice('cita:'.length)];
+  return key === 'togetherSince' ? ['meta', key] : null;
+};
+export const putBookRaw = (book) => run('books', 'readwrite', (s) => s.put(book));
+export const removeBookRaw = (id) => run('books', 'readwrite', (s) => s.delete(id));
+export const putMetaRaw = (key, value) => run('meta', 'readwrite', (s) => s.put({ key, value }));
+export const removeMetaRaw = (key) => run('meta', 'readwrite', (s) => s.delete(key));
+export async function putPageBlob(id, blob) {
+  await run('pages', 'readwrite', (s) => s.put({ id, blob }));
+  urlCache.delete(id); // Una foto que antes no estaba ya se puede mostrar.
+}
+export const hasPageBlob = async (id) => !!(await getPageBlob(id));
 
 export async function addPage(blob, w, h) {
   const id = newId();
@@ -49,7 +72,7 @@ export async function addPage(blob, w, h) {
 }
 
 const getPageRecord = (id) => run('pages', 'readonly', (s) => s.get(id));
-const getPageBlob = async (id) => (await getPageRecord(id))?.blob ?? null;
+export const getPageBlob = async (id) => (await getPageRecord(id))?.blob ?? null;
 
 export async function deletePage(id) {
   await run('pages', 'readwrite', (s) => s.delete(id));
@@ -64,6 +87,7 @@ export async function deleteBook(book) {
   await Promise.all(book.pages.filter((p) => p.scan).map((p) => deletePage(p.scan)));
   if (book.cover?.photoId && book.cover.photoOwn) await deletePage(book.cover.photoId);
   await run('books', 'readwrite', (s) => s.delete(book.id));
+  notify('book', book.id);
 }
 
 // Las URLs de objeto se reutilizan para no decodificar la misma foto varias veces.
@@ -76,8 +100,9 @@ export function getPageUrl(id) {
 }
 
 export const getMeta = async (key) => (await run('meta', 'readonly', (s) => s.get(key)))?.value;
-export const setMeta = (key, value) => run('meta', 'readwrite', (s) => s.put({ key, value }));
-export const deleteMeta = (key) => run('meta', 'readwrite', (s) => s.delete(key));
+const announceMeta = (key) => { const doc = metaDoc(key); if (doc) notify(...doc); };
+export const setMeta = async (key, value) => { await putMetaRaw(key, value); announceMeta(key); };
+export const deleteMeta = async (key) => { await removeMetaRaw(key); announceMeta(key); };
 export async function getMetaByPrefix(prefix) {
   const range = IDBKeyRange.bound(prefix, `${prefix}￿`);
   const rows = await run('meta', 'readonly', (s) => s.getAll(range));

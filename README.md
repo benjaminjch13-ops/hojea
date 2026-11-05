@@ -40,6 +40,10 @@ Las ideas están en `js/date-ideas.js` (Guatemala, tendencias de redes, clásica
 
 Cada cita se registra aparte de las libretas (`js/dates.js`), así que una libreta puede guardar muchas citas y borrar una libreta no borra las vaquitas. Cada cita gana una de las 100 vaquitas temáticas de `js/vaquitas.js` y `js/vaquitas-series.js`, que luego se puede usar como sticker; `nextVaquita` decide cuál.
 
+## Sincronización
+
+Con Supabase, las libretas, fotos, citas y la fecha de aniversario se comparten entre las dos cuentas de la pareja (`js/sync.js`). `supabase/schema.sql` crea la base de datos y sus permisos, y `js/sync-config.js` guarda la URL y la clave pública. Sin configurar, la app funciona igual, solo en el dispositivo. El color de Muu, su disfraz, el fondo y la vista de libretas siguen siendo de cada persona. Si los dos editan la misma libreta a la vez, se conservan ambas versiones.
+
 ## Publicación
 
 La app está en <https://dates-with-muu.vercel.app>. Cada push a `main` la publica en Vercel; `vercel.json` y `.vercelignore` definen qué se sube.

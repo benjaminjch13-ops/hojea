@@ -16,6 +16,8 @@ import { seedDemoBook } from './demo.js';
 import { openExportDialog } from './export-dialog.js';
 import { bindHome, homeHTML } from './home.js';
 import { shelfHTML, validView } from './shelf-views.js';
+import { initSync, syncInfo } from './sync.js';
+import { openSyncDialog } from './sync-ui.js';
 import { THEMES, loadTheme, saveTheme } from './themes.js';
 import { COSTUME_VIEWBOX, muuFigure, vaquitaById } from './vaquitas.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
@@ -115,6 +117,11 @@ function loadCoverPhotos(root) {
   });
 }
 
+function paintSyncDot() {
+  const button = app.querySelector('[data-sync]');
+  if (button) button.dataset.status = syncInfo().status;
+}
+
 // ---------- Estante ----------
 async function renderShelf(token) {
   const books = await db.listBooks();
@@ -127,6 +134,8 @@ async function renderShelf(token) {
       <div data-library-slot></div>
     </section>`;
   app.querySelector('[data-theme]').onclick = themeDialog;
+  app.querySelector('[data-sync]').onclick = openSyncDialog;
+  paintSyncDot();
   // Una libreta nueva empieza en el editor, donde cae del cielo: personalizarla es el primer paso.
   const createBook = async (title) => {
     const book = {
@@ -492,6 +501,8 @@ function openLightbox(url) {
 
 // ---------- Inicio ----------
 async function start() {
+  // El enlace del correo de confirmación regresa con datos en la dirección; no deben quedar a la vista.
+  if (/access_token|error_code/.test(location.hash)) history.replaceState(null, '', location.pathname + '#/');
   try {
     if (!(await db.getMeta('seeded'))) {
       await seedDemoBook();
@@ -526,6 +537,12 @@ async function start() {
     }, 400);
   });
   await route();
+  // Lo que llega del otro dispositivo aparece solo, salvo en una libreta abierta.
+  addEventListener('muu:synced', () => {
+    if (!/^#\/libro\//.test(location.hash) && !document.querySelector('dialog[open]')) route();
+  });
+  addEventListener('muu:sync-status', paintSyncDot);
+  initSync();
   if ('serviceWorker' in navigator && isSecureContext) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }

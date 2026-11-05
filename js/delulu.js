@@ -1175,6 +1175,9 @@ export function newDatePage(book, title, dateText, place, cow) {
   return pg(book.pageBg || 'lines', els);
 }
 export const forgetScan = (id) => SCANS.delete(id);
+// Imágenes pegadas en las páginas, para compartirlas entre dispositivos.
+export const getSyncedImage = (id) => S?.images[id] ?? null;
+export const addSyncedImage = (id, url) => { S.images[id] = url; };
 export function deleteImagesOf(book, otherBooks) {
   const ids = (x) => JSON.stringify(x).match(/img_[a-z0-9]+/g) ?? [];
   const keep = new Set([...ids(otherBooks), ...S.prefs.custom]);

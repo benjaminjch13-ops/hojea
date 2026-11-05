@@ -3,5 +3,6 @@
 README.md
 node_modules
 serve.mjs
+supabase
 tests
 tools

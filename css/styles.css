@@ -684,6 +684,23 @@ button.vaq-tile:hover { transform: translateY(-3px) rotate(-1deg); }
 .barn-dots b.on { background: var(--muu-pink); transform: scale(1.15); }
 .barn-bit { position: absolute; z-index: 2; color: var(--muu-pink); font-size: 20px; font-style: normal; pointer-events: none; animation: barn-bit .75s ease-out forwards; }
 @keyframes barn-bit { from { opacity: 1; transform: translate(-50%, -50%) scale(.6); } to { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2); } }
+.home-head-tools { display: flex; flex-direction: column; gap: 8px; }
+.sync-btn { position: relative; }
+.sync-dot { position: absolute; right: 7px; bottom: 7px; width: 9px; height: 9px; border: 2px solid var(--soft-white); border-radius: 50%; background: rgba(121, 100, 93, .4); box-sizing: content-box; }
+.sync-btn[data-status="synced"] .sync-dot, .sync-state.is-synced i { background: #7fae74; }
+.sync-btn[data-status="syncing"] .sync-dot, .sync-state.is-syncing i { background: var(--butter-yellow); }
+.sync-btn[data-status="error"] .sync-dot, .sync-btn[data-status="offline"] .sync-dot, .sync-state.is-error i, .sync-state.is-offline i { background: var(--muu-pink); }
+.dialog-sync { width: min(440px, calc(100vw - 32px)); }
+.sync-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.sync-form .text-field { width: 100%; }
+.sync-note { margin: 0 0 12px; font-size: 14px; color: var(--sheet-soft); }
+.sync-error { margin: 0 0 12px; padding: 8px 12px; border-radius: 10px; background: var(--strawberry-milk); color: var(--sheet-ink); font-size: 14px; }
+.sync-wide { width: 100%; margin-bottom: 16px; }
+.sync-code { text-transform: uppercase; letter-spacing: .12em; }
+.sync-state { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-weight: 600; }
+.sync-state i { width: 10px; height: 10px; border-radius: 50%; background: rgba(121, 100, 93, .4); }
+.sync-invite { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 14px; padding: 14px; border-radius: 16px; background: var(--milk-cream); text-align: center; }
+.sync-invite-code { font: 500 28px/1.1 var(--serif); letter-spacing: .12em; }
 .muu.has-costume { margin-top: 26px; }
 .costume-grid { max-height: 240px; margin-bottom: 18px; overflow-y: auto; }
 .costume-grid .breed-cow { width: 62px; }
