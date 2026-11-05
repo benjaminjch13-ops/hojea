@@ -93,17 +93,96 @@ button:disabled { cursor: default; opacity: .4; }
 .shelf-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .shelf-head h1 { font: 500 clamp(40px, 7vw, 60px)/1 var(--serif); margin: 12px 0 6px; letter-spacing: -.01em; }
 .shelf-head p { margin: 0 0 36px; color: var(--ink-soft); }
-.shelf-grid {
-  display: grid; gap: 36px 24px;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  align-items: end;
-  perspective: 1400px;
-}
+.view-picker { display: flex; gap: 6px; margin: -4px -16px 14px; padding: 2px 16px; overflow-x: auto; scrollbar-width: none; }
+.view-picker::-webkit-scrollbar { display: none; }
+.view-picker .chip { flex: none; }
+.library { --card: clamp(190px, 23vw, 250px); position: relative; }
+.shelf-grid { position: relative; perspective: 1400px; }
 .shelf-item, .shelf-new {
   display: block; text-decoration: none; color: inherit;
-  background: none; border: 0; padding: 0; text-align: left;
-  width: 100%;
+  background: none; border: 0; padding: 0; text-align: left; width: 100%; cursor: pointer;
 }
+
+/* Carrusel */
+.view-carrusel .shelf-grid {
+  display: flex; align-items: flex-start; gap: clamp(8px, 2vw, 24px);
+  padding: 22px calc(50% - var(--card) / 2) 14px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; cursor: grab;
+}
+.view-carrusel .shelf-grid::-webkit-scrollbar { display: none; }
+.view-carrusel .shelf-grid.is-dragging { scroll-snap-type: none; cursor: grabbing; user-select: none; }
+.view-carrusel .shelf-grid.is-dragging * { pointer-events: none; }
+.view-carrusel .shelf-item, .view-carrusel .shelf-new { flex: 0 0 var(--card); width: var(--card); text-align: center; scroll-snap-align: center; scroll-snap-stop: always; }
+.view-carrusel .cover-box, .view-carrusel .shelf-new-box {
+  transform: scale(calc(1 - var(--d, 0) * .2));
+  opacity: calc(1 - var(--d, 0) * .3);
+  transform-origin: 50% 60%;
+}
+.view-carrusel .mini-book {
+  transform: rotateY(calc(var(--s, 0) * -30deg)) rotateX(3deg);
+  transform-origin: 50% 50%;
+  transition: transform .12s linear;
+}
+.view-carrusel .is-center:hover .mini-book, .view-carrusel .is-center:focus-visible .mini-book { transform: rotateY(-12deg) rotateX(3deg) translateY(-6px); transition: transform .3s cubic-bezier(.2, .8, .3, 1); }
+.view-carrusel .shelf-meta { opacity: calc(1 - var(--d, 0) * .85); }
+
+/* Todas */
+.view-todas .shelf-grid { display: grid; gap: 36px 24px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); align-items: start; padding-top: 8px; }
+
+/* Lomos, para la torre y el estante */
+.lomo { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; overflow: hidden; background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(0, 0, 0, .14)), var(--spine); color: var(--spine-ink); box-shadow: 0 5px 8px -5px rgba(84, 67, 61, .6); }
+.lomo-title { min-width: 0; overflow: hidden; font: 500 16px/1.2 var(--serif); text-overflow: ellipsis; white-space: nowrap; }
+.lomo-count { flex: none; font-size: 12px; opacity: .85; }
+.lomo-new { border: 2px dashed rgba(121, 100, 93, .55); background: none; box-shadow: none; color: var(--ink); justify-content: center; }
+.lomo-new .ico { flex: none; width: 18px; height: 18px; }
+
+/* Torre: apiladas de frente, cada una un poco movida */
+.view-torre .shelf-grid { display: flex; flex-direction: column; gap: 2px; width: min(100%, 520px); margin: 8px auto 16px; padding-bottom: 12px; border-bottom: 8px solid rgba(121, 100, 93, .22); border-radius: 0 0 8px 8px; }
+.view-torre .shelf-item, .view-torre .shelf-new { transform: translateX(var(--off, 0)); width: calc(100% - 30px); margin-inline: auto; transition: transform .2s cubic-bezier(.2, .8, .3, 1); }
+.view-torre .shelf-item:hover, .view-torre .shelf-item:focus-visible { transform: translateX(calc(var(--off, 0px) + 14px)); }
+.view-torre .lomo { height: var(--thick, 44px); padding: 0 16px; border-radius: 4px 8px 8px 4px; border-left: 7px solid rgba(0, 0, 0, .22); }
+.view-torre .lomo::after { content: ""; position: absolute; right: 44%; top: 0; bottom: 0; width: 3px; background: var(--band); opacity: .85; }
+.view-torre .lomo-new { height: 44px; border-left: 2px dashed rgba(121, 100, 93, .55); margin-bottom: 8px; }
+
+/* Estante: paradas sobre repisas de madera */
+.view-estante .shelf-grid { --row: 244px; display: flex; flex-wrap: wrap; align-items: flex-end; align-content: flex-start; gap: 16px 5px; padding: 0 12px 16px; background: repeating-linear-gradient(180deg, transparent 0, transparent var(--row), #B98C6A var(--row), #9C7354 calc(var(--row) + 12px), transparent calc(var(--row) + 12px), transparent calc(var(--row) + 16px)); }
+.view-estante .shelf-item, .view-estante .shelf-new { width: auto; height: var(--row); display: flex; align-items: flex-end; transform-origin: 50% 100%; transition: transform .2s cubic-bezier(.2, .8, .3, 1); }
+.view-estante .shelf-item:hover, .view-estante .shelf-item:focus-visible { transform: translateY(-12px); }
+.view-estante .lomo { flex-direction: column-reverse; width: var(--thick, 44px); height: calc(196px + var(--tall, 0px)); padding: 14px 0; border-radius: 5px 5px 2px 2px; writing-mode: vertical-rl; }
+.view-estante .lomo::after { content: ""; position: absolute; top: 34%; left: 0; right: 0; height: 3px; background: var(--band); opacity: .85; }
+.view-estante .lomo-title { max-height: 150px; }
+.view-estante .lomo-count { display: none; }
+.view-estante .lomo-new { width: 48px; height: 200px; flex-direction: row; gap: 8px; border-radius: 6px; }
+
+/* Abanico: como cartas en la mano */
+.view-abanico .shelf-grid { --card: clamp(130px, 22vw, 200px); height: calc(var(--card) * 1.9); margin: 10px 0 12px; overflow: hidden; perspective: none; padding-top: 18px; }
+.view-abanico .shelf-item, .view-abanico .shelf-new { position: absolute; bottom: 24px; left: calc(50% - var(--card) / 2 + var(--fan, 0) * min(calc(var(--card) * .46), calc((100% - var(--card) - 76px) / var(--gaps, 1)))); width: var(--card); z-index: var(--z, 0); transform: rotate(calc(var(--fan, 0) * min(9deg, calc(36deg / var(--gaps, 1))))); transform-origin: 50% 110%; transition: transform .22s cubic-bezier(.2, .8, .3, 1), z-index 0s; }
+.view-abanico .shelf-item:hover, .view-abanico .shelf-item:focus-visible, .view-abanico .shelf-new:hover { z-index: 40; transform: rotate(calc(var(--fan, 0) * min(9deg, calc(36deg / var(--gaps, 1))))) translateY(-14px) scale(1.04); }
+.view-abanico .mini-book { transform: none; }
+.view-abanico .shelf-item:hover .mini-book { transform: none; }
+.view-abanico .shelf-new-box { background: var(--glass-strong); }
+
+/* Lista */
+.view-lista .shelf-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; perspective: none; }
+.view-lista .shelf-item, .view-lista .shelf-new { display: flex; align-items: center; gap: 14px; min-height: 76px; padding: 8px 14px; border-radius: 16px; background: var(--glass); transition: background .15s; }
+.view-lista .shelf-item:hover, .view-lista .shelf-new:hover { background: var(--glass-strong); }
+.view-lista .cover-box { flex: none; width: 44px; }
+.view-lista .mini-book, .view-lista .shelf-item:hover .mini-book { transform: none; filter: drop-shadow(1px 3px 3px rgba(84, 67, 61, .4)); }
+.view-lista .shelf-meta { flex: 1; min-width: 0; margin: 0; }
+.view-lista .shelf-item > .ico { flex: none; width: 18px; height: 18px; color: var(--ink-soft); }
+.view-lista .shelf-new-box { flex: none; width: 44px; border-radius: 6px; }
+.view-lista .shelf-new-box .ico { width: 20px; height: 20px; }
+
+.carousel-arrow { position: absolute; top: 34%; z-index: 2; box-shadow: var(--ui-shadow); }
+.carousel-arrow.prev { left: 0; }
+.carousel-arrow.next { right: 0; }
+.carousel-arrow:disabled { opacity: 0; pointer-events: none; }
+.carousel-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; padding-bottom: 8px; }
+.carousel-dots button { width: 22px; height: 22px; padding: 0; border: 0; background: none; cursor: pointer; }
+.carousel-dots button::before { content: ""; display: block; width: 9px; height: 9px; margin: auto; border-radius: 50%; background: rgba(121, 100, 93, .3); transition: transform .2s, background .2s; }
+.carousel-dots button[aria-current]::before { background: var(--muu-pink); transform: scale(1.3); }
+@media (hover: none) { .carousel-arrow { display: none; } }
 .cover-box { container-type: inline-size; width: 100%; }
 .mini-book {
   --u: calc(100cqw / 560);
@@ -632,12 +711,15 @@ button.vaq-tile:hover { transform: translateY(-3px) rotate(-1deg); }
 .memory-caption { display: flex; flex-direction: column; min-width: 0; font-size: 14px; color: var(--ink-soft); }
 .memory-caption strong { color: var(--ink); font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
 .shelf-title { margin: 0 0 16px; font: 500 24px/1.2 var(--serif); }
-.shelf-item, .shelf-new { animation: book-land .55s cubic-bezier(.2, 1.25, .4, 1) both; animation-delay: calc(var(--i, 0) * 60ms + .1s); }
+.view-carrusel :is(.shelf-item, .shelf-new), .view-todas :is(.shelf-item, .shelf-new), .view-lista :is(.shelf-item, .shelf-new) { animation: book-land .55s cubic-bezier(.2, 1.25, .4, 1) both; animation-delay: calc(var(--i, 0) * 50ms + .05s); }
+.view-torre :is(.shelf-item, .shelf-new) .lomo, .view-estante :is(.shelf-item, .shelf-new) .lomo { animation: book-land .45s cubic-bezier(.2, 1.25, .4, 1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.view-abanico :is(.shelf-item, .shelf-new) > * { animation: fan-in .5s cubic-bezier(.2, 1.1, .4, 1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+@keyframes fan-in { from { opacity: 0; transform: translateY(40px) scale(.9); } }
 @keyframes book-land { from { opacity: 0; transform: translateY(-26px); } }
 .since-form { display: flex; flex-direction: column; gap: 4px; }
 .since-form .text-field { color-scheme: light; }
 @media (prefers-reduced-motion: reduce) {
-  .b-float, .home-deco span, .home-card, .home-muu, .muu-thinking .advice-cow, .shelf-item, .shelf-new, .reveal-card, .barn, .barn.shaking, .barn-title, .barn-hint, .barn-bit { animation: none; }
+  .b-float, .home-deco span, .home-card, .home-muu, .muu-thinking .advice-cow, .library :is(.shelf-item, .shelf-new), .library .lomo, .view-abanico :is(.shelf-item, .shelf-new) > *, .reveal-card, .barn, .barn.shaking, .barn-title, .barn-hint, .barn-bit { animation: none; }
   .barn-bit { display: none; }
   .reveal-pop, .reveal-hearts { display: none; }
 }

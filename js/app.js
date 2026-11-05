@@ -1,8 +1,9 @@
 // Pantallas y navegación de Date's with Muu.
 import * as db from './db.js';
 import { Book3D } from './book3d.js';
+import { bindCarousel } from './carousel.js';
 import { renderCollection } from './collection-view.js';
-import { coverDefaults, miniBookHTML } from './cover.js';
+import { coverDefaults } from './cover.js';
 import { MUU_BREEDS, muuBreedHead, muuSittingSVG } from './cow.js';
 import { renderCoverEditor } from './cover-editor.js';
 import { cropPhoto, openCamera } from './capture.js';
@@ -14,6 +15,7 @@ import { currentCostume, dateForPage, earnedCostumes, longDate, setCostume } fro
 import { seedDemoBook } from './demo.js';
 import { openExportDialog } from './export-dialog.js';
 import { bindHome, homeHTML } from './home.js';
+import { shelfHTML, validView } from './shelf-views.js';
 import { THEMES, loadTheme, saveTheme } from './themes.js';
 import { COSTUME_VIEWBOX, muuFigure, vaquitaById } from './vaquitas.js';
 import { confirmDialog, esc, icon, modal, toast } from './ui.js';
@@ -122,19 +124,8 @@ async function renderShelf(token) {
   app.innerHTML = `
     <section class="view shelf">
       ${head}
-      <div class="shelf-grid">
-        ${books.map((b, i) => `
-          <a class="shelf-item" href="#/libro/${b.id}" style="--i:${i}">
-            ${miniBookHTML(b)}
-            <span class="shelf-meta"><strong>${esc(b.title)}</strong><span>${pageCount(b.pages.length)}</span></span>
-          </a>`).join('')}
-        <button class="shelf-new" data-new>
-          <span class="shelf-new-box">${icon('plus')}</span>
-          <span class="shelf-meta"><strong>Nueva libreta</strong><span>Elige su cuero y sus charms</span></span>
-        </button>
-      </div>
+      <div data-library-slot></div>
     </section>`;
-  loadCoverPhotos(app);
   app.querySelector('[data-theme]').onclick = themeDialog;
   // Una libreta nueva empieza en el editor, donde cae del cielo: personalizarla es el primer paso.
   const createBook = async (title) => {
@@ -145,7 +136,21 @@ async function renderShelf(token) {
     justCreated = book.id;
     location.hash = `#/libro/${book.id}/portada`;
   };
-  app.querySelector('[data-new]').onclick = () => createBook('Mi libreta');
+  const slot = app.querySelector('[data-library-slot]');
+  const paintLibrary = (view) => {
+    slot.innerHTML = shelfHTML(books, view);
+    slot.querySelector('[data-new]').onclick = () => createBook('Mi libreta');
+    if (validView(view) === 'carrusel') bindCarousel(slot.querySelector('.library'));
+    loadCoverPhotos(slot);
+  };
+  slot.addEventListener('click', (e) => {
+    const view = e.target.closest('[data-view]')?.dataset.view;
+    if (!view) return;
+    paintLibrary(view);
+    db.setMeta('shelfView', view);
+  });
+  paintLibrary(await db.getMeta('shelfView'));
+  if (token !== routeToken) return;
   await bindHome(app.querySelector('.shelf'), books, { createBook, refresh: route });
 }
 
